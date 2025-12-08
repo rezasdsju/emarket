@@ -27,13 +27,13 @@ const ProductDetail = ({ addToCart }) => {
             setLoading(true);
             setError(null);
             
-            const response = await axios.get(`http://127.0.0.1:8000/api/products/${id}/`);
+            const response = await axios.get(`https://organic.satbeta.top/api/products/${id}/`);
             setProduct(response.data);
             
             if (response.data.category && response.data.category.id) {
                 try {
                     const relatedResponse = await axios.get(
-                        `http://127.0.0.1:8000/api/products/?category=${response.data.category.slug}`
+                        `https://organic.satbeta.top/api/products/?category=${response.data.category.slug}`
                     );
                     
                     const allRelated = relatedResponse.data.results || relatedResponse.data;
@@ -112,7 +112,7 @@ const ProductDetail = ({ addToCart }) => {
             console.log('Sending quick order:', orderData);
             
             const orderResponse = await axios.post(
-                'http://127.0.0.1:8000/api/orders/',
+                'https://organic.satbeta.top/api/orders/',
                 orderData
             );
             
@@ -213,7 +213,7 @@ const ProductDetail = ({ addToCart }) => {
                                         <h5>পণ্যের তথ্য</h5>
                                         <div className="d-flex align-items-center">
                                             <img 
-                                                src={product.image_url || (product.image ? `http://127.0.0.1:8000${product.image}` : '')}
+                                                src={product.image_url || (product.image ? `https://organic.satbeta.top${product.image}` : '')}
                                                 alt={product.name}
                                                 className="img-thumbnail me-3"
                                                 style={{ width: '80px', height: '80px', objectFit: 'cover' }}
@@ -305,7 +305,7 @@ const ProductDetail = ({ addToCart }) => {
     
     // ইমেজ URL তৈরি
     const imageUrl = product.image_url || 
-                    (product.image ? `http://127.0.0.1:8000${product.image}` : '');
+                    (product.image ? `https://organic.satbeta.top${product.image}` : '');
     
     return (
         <div className="container mt-4">
@@ -510,7 +510,7 @@ const ProductDetail = ({ addToCart }) => {
                                     <Link to={`/product/${relatedProduct.id}`} className="text-decoration-none text-dark">
                                         <img 
                                             src={relatedProduct.image_url || 
-                                                 (relatedProduct.image ? `http://127.0.0.1:8000${relatedProduct.image}` : 
+                                                 (relatedProduct.image ? `https://organic.satbeta.top${relatedProduct.image}` : 
                                                  'https://via.placeholder.com/300x200?text=Image')}
                                             className="card-img-top"
                                             alt={relatedProduct.name}

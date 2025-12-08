@@ -60,7 +60,7 @@ function App() {
                 name: product.name || 'Unknown Product',
                 price: parseFloat(product.price) || 0,
                 image: product.image_url || 
-                      (product.image ? `http://127.0.0.1:8000${product.image}` : 
+                      (product.image ? `https://organic.satbeta.top${product.image}` : 
                       'https://via.placeholder.com/300x200?text=No+Image'),
                 quantity: Math.max(1, quantity),
                 product: product // সম্পূর্ণ পণ্য ডেটা সেভ করা (অপশনাল)

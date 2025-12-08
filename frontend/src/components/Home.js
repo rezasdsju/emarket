@@ -8,6 +8,11 @@ const Home = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activeTab, setActiveTab] = useState('all'); // 'all', 'featured', 'new', 'discount'
+    
+    // প্রোডাকশন এবং ডেভেলপমেন্ট URL
+    const API_BASE_URL = 'https://organic.satbeta.top';
+    // const API_BASE_URL = 'http://127.0.0.1:8000'; // বিকল্প ডেভেলপমেন্ট URL
     
     useEffect(() => {
         fetchData();
@@ -18,52 +23,123 @@ const Home = () => {
             setLoading(true);
             setError(null);
             
-            // ১. পণ্য ফেচ
-            const productsResponse = await axios.get('http://127.0.0.1:8000/api/products/');
+            console.log('ডেটা লোড শুরু হচ্ছে...');
             
-            // API পেজিনেশন আছে, তাই .results নিতে হবে
-            console.log("Products API Response:", productsResponse.data);
+            // একই সাথে API কল করার জন্য Promise.all ব্যবহার
+            const [productsResponse, categoriesResponse] = await Promise.all([
+                axios.get(`${API_BASE_URL}/api/products/`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }).catch(err => {
+                    console.error('Products API Error:', err);
+                    // ফ্যালব্যাক চেষ্টা
+                    return axios.get('http://127.0.0.1:8000/api/products/');
+                }),
+                
+                axios.get(`${API_BASE_URL}/api/categories/`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }).catch(err => {
+                    console.error('Categories API Error:', err);
+                    // ফ্যালব্যাক চেষ্টা
+                    return axios.get('http://127.0.0.1:8000/api/categories/');
+                })
+            ]);
             
+            console.log('Products API Response:', productsResponse.data);
+            console.log('Categories API Response:', categoriesResponse.data);
+            
+            // পণ্য প্রসেস করা
+            let productsData = [];
             if (productsResponse.data.results) {
                 // পেজিনেশন আছে: results ব্যবহার করুন
-                setProducts(productsResponse.data.results);
-                console.log(`পণ্য পাওয়া গেছে: ${productsResponse.data.results.length} টি`);
+                productsData = productsResponse.data.results;
+                console.log(`পণ্য পাওয়া গেছে: ${productsData.length} টি`);
             } else if (Array.isArray(productsResponse.data)) {
                 // সরাসরি অ্যারে (পেজিনেশন বন্ধ থাকলে)
-                setProducts(productsResponse.data);
-                console.log(`পণ্য পাওয়া গেছে: ${productsResponse.data.length} টি`);
+                productsData = productsResponse.data;
+                console.log(`পণ্য পাওয়া গেছে: ${productsData.length} টি`);
             } else {
-                // অন্য কোনো ফরম্যাট
                 console.warn("অপেক্ষিত API রেসপন্স ফরম্যাট");
-                setProducts([]);
+                productsData = [];
             }
             
-            // ২. ক্যাটাগরি ফেচ
-            const categoriesResponse = await axios.get('http://127.0.0.1:8000/api/categories/');
+            setProducts(productsData);
             
-            console.log("Categories API Response:", categoriesResponse.data);
-            
+            // ক্যাটাগরি প্রসেস করা
+            let categoriesData = [];
             if (categoriesResponse.data.results) {
                 // পেজিনেশন আছে: results ব্যবহার করুন
-                setCategories(categoriesResponse.data.results);
-                console.log(`ক্যাটাগরি পাওয়া গেছে: ${categoriesResponse.data.results.length} টি`);
+                categoriesData = categoriesResponse.data.results;
+                console.log(`ক্যাটাগরি পাওয়া গেছে: ${categoriesData.length} টি`);
             } else if (Array.isArray(categoriesResponse.data)) {
                 // সরাসরি অ্যারে
-                setCategories(categoriesResponse.data);
+                categoriesData = categoriesResponse.data;
                 console.log(`ক্যাটাগরি পাওয়া গেছে: ${categoriesResponse.data.length} টি`);
             } else {
                 console.warn("অপেক্ষিত API রেসপন্স ফরম্যাট");
-                setCategories([]);
+                categoriesData = [];
             }
+            
+            setCategories(categoriesData);
             
             setLoading(false);
             
         } catch (err) {
             console.error('ডেটা লোড করতে সমস্যা:', err);
-            setError('ডেটা লোড করতে সমস্যা হচ্ছে। সার্ভার চেক করুন।');
+            
+            let errorMessage = 'ডেটা লোড করতে সমস্যা হচ্ছে।';
+            
+            if (err.response) {
+                // সার্ভার রেসপন্স সহ error
+                console.error('Error Response Data:', err.response.data);
+                console.error('Error Response Status:', err.response.status);
+                
+                if (err.response.status === 404) {
+                    errorMessage = 'API এন্ডপয়েন্ট পাওয়া যায়নি। সার্ভার চেক করুন।';
+                } else if (err.response.status === 500) {
+                    errorMessage = 'সার্ভারে অভ্যন্তরীণ সমস্যা হয়েছে।';
+                } else if (err.response.status === 403) {
+                    errorMessage = 'অ্যাক্সেস ডিনাইড। CORS সমস্যা হতে পারে।';
+                }
+            } else if (err.request) {
+                // রিকোয়েস্ট পাঠানো হয়েছে কিন্তু রেসপন্স আসেনি
+                console.error('No response received:', err.request);
+                errorMessage = 'সার্ভার রেসপন্স দিচ্ছে না। সার্ভার চালু আছে কিনা চেক করুন।';
+            } else {
+                // অন্য কোনো error
+                console.error('Error:', err.message);
+                errorMessage = `Network Error: ${err.message}`;
+            }
+            
+            setError(errorMessage);
             setProducts([]);
             setCategories([]);
             setLoading(false);
+        }
+    };
+    
+    // ফিল্টার করা পণ্য
+    const getFilteredProducts = () => {
+        switch (activeTab) {
+            case 'featured':
+                return products.filter(product => product.featured);
+            case 'new':
+                // শেষ 30 দিনের পণ্য
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                return products.filter(product => {
+                    const createdDate = new Date(product.created_at || product.date_added);
+                    return createdDate > thirtyDaysAgo;
+                });
+            case 'discount':
+                return products.filter(product => 
+                    product.discount_price && product.discount_price < product.price
+                );
+            default:
+                return products;
         }
     };
     
@@ -71,11 +147,17 @@ const Home = () => {
     if (loading) {
         return (
             <div className="container mt-5 text-center">
-                <div className="spinner-border text-primary" role="status">
+                <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status">
                     <span className="visually-hidden">লোড হচ্ছে...</span>
                 </div>
-                <p className="mt-3">পণ্য লোড হচ্ছে...</p>
-                <p className="text-muted">API: http://127.0.0.1:8000/api/products/</p>
+                <p className="mt-3 fs-5">অর্গানিক বাজার লোড হচ্ছে...</p>
+                <p className="text-muted">
+                    <small>API: {API_BASE_URL}/api/products/</small>
+                </p>
+                <div className="progress mt-3" style={{ height: '4px', maxWidth: '300px', margin: '0 auto' }}>
+                    <div className="progress-bar progress-bar-striped progress-bar-animated" 
+                         style={{ width: '100%' }}></div>
+                </div>
             </div>
         );
     }
@@ -84,104 +166,353 @@ const Home = () => {
     if (error) {
         return (
             <div className="container mt-5">
-                <div className="alert alert-danger">
-                    <h4>এরর!</h4>
+                <div className="alert alert-danger alert-dismissible fade show" role="alert">
+                    <h4 className="alert-heading">
+                        <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                        ডেটা লোড করতে ব্যর্থ!
+                    </h4>
                     <p>{error}</p>
-                    <div className="mt-3">
-                        <button className="btn btn-primary me-2" onClick={fetchData}>
+                    <hr />
+                    <div className="d-flex flex-column flex-md-row gap-2">
+                        <button className="btn btn-primary me-md-2" onClick={fetchData}>
+                            <i className="bi bi-arrow-clockwise me-1"></i>
                             আবার চেষ্টা করুন
                         </button>
-                        <a href="http://127.0.0.1:8000/api/products/" 
-                           target="_blank" 
-                           rel="noopener noreferrer" 
-                           className="btn btn-outline-primary">
+                        <a 
+                            href={`${API_BASE_URL}/api/products/`} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="btn btn-outline-primary"
+                        >
+                            <i className="bi bi-box-arrow-up-right me-1"></i>
                             API সরাসরি দেখুন
                         </a>
+                        <a 
+                            href="/" 
+                            className="btn btn-outline-secondary"
+                        >
+                            <i className="bi bi-house me-1"></i>
+                            হোমে ফিরে যান
+                        </a>
+                    </div>
+                    <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                
+                {/* ডিবাগ তথ্য (শুধু development এ দেখান) */}
+                <div className="card mt-3">
+                    <div className="card-header bg-dark text-white">
+                        <h6 className="mb-0">ডিবাগ তথ্য</h6>
+                    </div>
+                    <div className="card-body">
+                        <ul className="list-unstyled">
+                            <li><strong>API Base URL:</strong> {API_BASE_URL}</li>
+                            <li><strong>Products API:</strong> {API_BASE_URL}/api/products/</li>
+                            <li><strong>Categories API:</strong> {API_BASE_URL}/api/categories/</li>
+                            <li><strong>Admin Panel:</strong> {API_BASE_URL}/admin/</li>
+                        </ul>
                     </div>
                 </div>
             </div>
         );
     }
     
+    const filteredProducts = getFilteredProducts();
+    
     return (
-        <div className="container mt-4">
-            <div className="jumbotron bg-light p-5 rounded">
-                <h1 className="display-4"> অর্গানিক বাজারে স্বাগতম!</h1>
-                <p className="lead">সেরা দামে সেরা পণ্য কিনুন আপনার ঘরে বসেই</p>
-                <div className="mt-3">
-                    <span className="badge bg-success me-2">
-                        পণ্য: {products.length} টি
-                    </span>
-                    <span className="badge bg-info">
-                        ক্যাটাগরি: {categories.length} টি
-                    </span>
-                </div>
-            </div>
-            
-            {/* ক্যাটাগরি সেকশন */}
-            <h3 className="my-4">ক্যাটাগরি ({categories.length})</h3>
-            {categories.length === 0 ? (
-                <div className="alert alert-warning">
-                    কোনো ক্যাটাগরি পাওয়া যায়নি। অ্যাডমিন থেকে ক্যাটাগরি যোগ করুন।
-                </div>
-            ) : (
-                <div className="row mb-4">
-                    {categories.map(category => (
-                        <div key={category.id} className="col-md-2 col-sm-4 col-6 mb-2">
-                            <Link 
-                                to={`/category/${category.slug}`}
-                                className="btn btn-outline-primary btn-block w-100"
-                            >
-                                {category.name}
-                            </Link>
+        <div className="home-page">
+            {/* হিরো সেকশন */}
+            <div className="hero-section bg-primary text-white py-5">
+                <div className="container">
+                    <div className="row align-items-center">
+                        <div className="col-lg-6">
+                            <h1 className="display-4 fw-bold mb-3">অর্গানিক বাজারে স্বাগতম!</h1>
+                            <p className="lead mb-4">
+                                প্রকৃতির সেরা উপহার - ১০০% প্রাকৃতিক, রাসায়নিক মুক্ত পণ্য। 
+                                আপনার স্বাস্থ্য সুরক্ষার জন্য আমরা নির্বাচন করি সেরা অর্গানিক পণ্য।
+                            </p>
+                            <div className="d-flex flex-wrap gap-3">
+                                <Link to="/products" className="btn btn-light btn-lg px-4">
+                                    <i className="bi bi-cart me-2"></i>
+                                    সব পণ্য দেখুন
+                                </Link>
+                                <Link to="/categories" className="btn btn-outline-light btn-lg px-4">
+                                    <i className="bi bi-tags me-2"></i>
+                                    ক্যাটাগরি ব্রাউজ করুন
+                                </Link>
+                            </div>
                         </div>
-                    ))}
-                </div>
-            )}
-            
-            {/* পণ্য সেকশন */}
-            <h3 className="my-4">সব পণ্য ({products.length})</h3>
-            {products.length === 0 ? (
-                <div className="alert alert-warning">
-                    <p>কোনো পণ্য পাওয়া যায়নি।</p>
-                    <div className="mt-2">
-                        <a href="http://127.0.0.1:8000/admin/" 
-                           target="_blank" 
-                           rel="noopener noreferrer" 
-                           className="btn btn-sm btn-primary me-2">
-                            অ্যাডমিন থেকে যোগ করুন
-                        </a>
-                        <button className="btn btn-sm btn-outline-primary" onClick={fetchData}>
-                            রিফ্রেশ করুন
-                        </button>
+                        <div className="col-lg-6 text-center">
+                            <img 
+                                src="https://cdn.pixabay.com/photo/2016/11/19/15/40/basket-1839795_1280.jpg" 
+                                alt="অর্গানিক পণ্য" 
+                                className="img-fluid rounded shadow"
+                                style={{ maxHeight: '300px' }}
+                            />
+                        </div>
                     </div>
                 </div>
-            ) : (
-                <div className="row">
-                    {products.map(product => (
-                        <div key={product.id} className="col-lg-3 col-md-4 col-sm-6 mb-4">
-                            <ProductCard product={product} />
-                        </div>
-                    ))}
-                </div>
-            )}
-            
-            {/* ডিবাগ ইনফো (শুধু ডেভেলপমেন্টে) */}
-            {/*
-            <div className="mt-5 pt-4 border-top text-muted small">
-                <p className="mb-1">
-                    <strong>API Endpoints:</strong>
-                </p>
-                <ul className="list-unstyled mb-1">
-                    <li>• পণ্য: <code>http://127.0.0.1:8000/api/products/</code></li>
-                    <li>• ক্যাটাগরি: <code>http://127.0.0.1:8000/api/categories/</code></li>
-                    <li>• অ্যাডমিন: <code>http://127.0.0.1:8000/admin/</code></li>
-                </ul>
-                <p className="mb-0">
-                    <em>API পেজিনেশন ব্যবহার করছে। পণ্যগুলো <code>.results</code> প্রপার্টিতে আছে।</em>
-                </p>
             </div>
-            */}
+            
+            <div className="container mt-5">
+                {/* স্ট্যাটাস বার */}
+                <div className="row mb-4">
+                    <div className="col-md-4 mb-3">
+                        <div className="card border-0 shadow-sm text-center h-100 bg-light">
+                            <div className="card-body">
+                                <div className="display-6 text-primary mb-2">
+                                    <i className="bi bi-box-seam"></i>
+                                </div>
+                                <h3 className="card-title">{products.length}</h3>
+                                <p className="card-text text-muted">মোট পণ্য</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-md-4 mb-3">
+                        <div className="card border-0 shadow-sm text-center h-100 bg-light">
+                            <div className="card-body">
+                                <div className="display-6 text-success mb-2">
+                                    <i className="bi bi-tags"></i>
+                                </div>
+                                <h3 className="card-title">{categories.length}</h3>
+                                <p className="card-text text-muted">ক্যাটাগরি</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-md-4 mb-3">
+                        <div className="card border-0 shadow-sm text-center h-100 bg-light">
+                            <div className="card-body">
+                                <div className="display-6 text-warning mb-2">
+                                    <i className="bi bi-truck"></i>
+                                </div>
+                                <h3 className="card-title">ফ্রি</h3>
+                                <p className="card-text text-muted">ডেলিভারি</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* ক্যাটাগরি সেকশন */}
+                <div className="section-title mb-4">
+                    <h2 className="fw-bold">
+                        <i className="bi bi-grid me-2"></i>
+                        আমাদের ক্যাটাগরি সমূহ
+                        <span className="badge bg-primary ms-2">{categories.length}</span>
+                    </h2>
+                    <p className="text-muted">আপনার পছন্দের ক্যাটাগরি থেকে পণ্য নির্বাচন করুন</p>
+                </div>
+                
+                {categories.length === 0 ? (
+                    <div className="alert alert-warning">
+                        <i className="bi bi-exclamation-triangle me-2"></i>
+                        কোনো ক্যাটাগরি পাওয়া যায়নি। অ্যাডমিন প্যানেল থেকে ক্যাটাগরি যোগ করুন।
+                        <div className="mt-2">
+                            <a 
+                                href={`${API_BASE_URL}/admin/`} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="btn btn-sm btn-primary me-2"
+                            >
+                                <i className="bi bi-gear me-1"></i>
+                                অ্যাডমিন প্যানেল
+                            </a>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="row mb-5">
+                        {categories.map(category => (
+                            <div key={category.id} className="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+                                <Link 
+                                    to={`/category/${category.slug || category.id}`}
+                                    className="card category-card text-center h-100 border-0 shadow-sm text-decoration-none"
+                                >
+                                    <div className="card-body">
+                                        <div className="category-icon mb-3 text-primary" style={{ fontSize: '2rem' }}>
+                                            <i className="bi bi-basket"></i>
+                                        </div>
+                                        <h6 className="card-title mb-2 text-dark fw-semibold">
+                                            {category.name}
+                                        </h6>
+                                        <small className="text-muted">
+                                            {category.product_count || 'পণ্য দেখুন'}
+                                        </small>
+                                    </div>
+                                    <div className="card-footer bg-transparent border-top-0">
+                                        <span className="badge bg-primary rounded-pill">
+                                            <i className="bi bi-arrow-right"></i>
+                                        </span>
+                                    </div>
+                                </Link>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                
+                {/* পণ্য ট্যাবস */}
+                <div className="section-title mb-4">
+                    <h2 className="fw-bold">
+                        <i className="bi bi-star me-2"></i>
+                        সেরা পণ্য সমূহ
+                        <span className="badge bg-success ms-2">{filteredProducts.length}</span>
+                    </h2>
+                </div>
+                
+                {/* পণ্য ফিল্টার ট্যাবস */}
+                <div className="mb-4">
+                    <ul className="nav nav-tabs" id="productTabs" role="tablist">
+                        <li className="nav-item" role="presentation">
+                            <button
+                                className={`nav-link ${activeTab === 'all' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('all')}
+                            >
+                                <i className="bi bi-grid-3x3 me-1"></i>
+                                সব পণ্য
+                                <span className="badge bg-secondary ms-1">{products.length}</span>
+                            </button>
+                        </li>
+                        <li className="nav-item" role="presentation">
+                            <button
+                                className={`nav-link ${activeTab === 'featured' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('featured')}
+                            >
+                                <i className="bi bi-star me-1"></i>
+                                বিশেষ অফার
+                                <span className="badge bg-warning ms-1">
+                                    {products.filter(p => p.featured).length}
+                                </span>
+                            </button>
+                        </li>
+                        <li className="nav-item" role="presentation">
+                            <button
+                                className={`nav-link ${activeTab === 'new' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('new')}
+                            >
+                                <i className="bi bi-clock-history me-1"></i>
+                                নতুন পণ্য
+                            </button>
+                        </li>
+                        <li className="nav-item" role="presentation">
+                            <button
+                                className={`nav-link ${activeTab === 'discount' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('discount')}
+                            >
+                                <i className="bi bi-percent me-1"></i>
+                                ডিসকাউন্ট
+                                <span className="badge bg-danger ms-1">
+                                    {products.filter(p => p.discount_price && p.discount_price < p.price).length}
+                                </span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                
+                {/* পণ্য গ্রিড */}
+                {filteredProducts.length === 0 ? (
+                    <div className="alert alert-info">
+                        <i className="bi bi-info-circle me-2"></i>
+                        <strong>{activeTab === 'all' ? 'কোনো পণ্য' : 
+                               activeTab === 'featured' ? 'কোনো বিশেষ পণ্য' : 
+                               activeTab === 'new' ? 'কোনো নতুন পণ্য' : 'কোনো ডিসকাউন্ট পণ্য'} পাওয়া যায়নি।</strong>
+                        <div className="mt-2">
+                            <button className="btn btn-sm btn-outline-primary me-2" onClick={fetchData}>
+                                <i className="bi bi-arrow-clockwise me-1"></i>
+                                রিফ্রেশ করুন
+                            </button>
+                            <button className="btn btn-sm btn-primary" onClick={() => setActiveTab('all')}>
+                                <i className="bi bi-grid me-1"></i>
+                                সব পণ্য দেখুন
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                        {filteredProducts.map(product => (
+                            <div key={product.id} className="col">
+                                <ProductCard product={product} />
+                            </div>
+                        ))}
+                    </div>
+                )}
+                
+                {/* ফুটার সেকশন */}
+                <div className="mt-5 pt-4 border-top text-center">
+                    <p className="text-muted mb-2">
+                        <small>
+                            <i className="bi bi-shield-check text-success me-1"></i>
+                            ১০০% অথেন্টিক অর্গানিক পণ্য
+                        </small>
+                    </p>
+                    <div className="d-flex justify-content-center gap-3 mb-3">
+                        <span className="text-success">
+                            <i className="bi bi-truck"></i> ফ্রি হোম ডেলিভারি
+                        </span>
+                        <span className="text-primary">
+                            <i className="bi bi-arrow-repeat"></i> ৭ দিন রিটার্ন
+                        </span>
+                        <span className="text-warning">
+                            <i className="bi bi-shield-check"></i> গ্যারান্টিযুক্ত
+                        </span>
+                    </div>
+                    <button 
+                        className="btn btn-outline-primary btn-sm"
+                        onClick={fetchData}
+                    >
+                        <i className="bi bi-arrow-clockwise me-1"></i>
+                        লিস্ট আপডেট করুন
+                    </button>
+                </div>
+                
+                {/* ডিবাগ ইনফো (শুধু ডেভেলপমেন্টে দেখা যাবে) */}
+                {process.env.NODE_ENV === 'development' && (
+                    <div className="mt-5 pt-4 border-top text-muted small">
+                        <details>
+                            <summary className="mb-2">
+                                <strong>ডিবাগ তথ্য (Development Only)</strong>
+                            </summary>
+                            <ul className="list-unstyled mb-1">
+                                <li>• <strong>API Base URL:</strong> <code>{API_BASE_URL}</code></li>
+                                <li>• <strong>Products API:</strong> <code>{API_BASE_URL}/api/products/</code></li>
+                                <li>• <strong>Categories API:</strong> <code>{API_BASE_URL}/api/categories/</code></li>
+                                <li>• <strong>Total Products:</strong> {products.length}</li>
+                                <li>• <strong>Total Categories:</strong> {categories.length}</li>
+                                <li>• <strong>Active Tab:</strong> {activeTab}</li>
+                                <li>• <strong>Filtered Products:</strong> {filteredProducts.length}</li>
+                            </ul>
+                        </details>
+                    </div>
+                )}
+            </div>
+            
+            {/* CSS স্টাইলস */}
+            <style jsx>{`
+                .hero-section {
+                    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                }
+                
+                .category-card {
+                    transition: transform 0.3s ease, box-shadow 0.3s ease;
+                }
+                
+                .category-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+                }
+                
+                .category-icon {
+                    transition: transform 0.3s ease;
+                }
+                
+                .category-card:hover .category-icon {
+                    transform: scale(1.2);
+                }
+                
+                .nav-tabs .nav-link {
+                    transition: all 0.3s ease;
+                }
+                
+                .nav-tabs .nav-link.active {
+                    font-weight: 600;
+                }
+            `}</style>
         </div>
     );
 };
