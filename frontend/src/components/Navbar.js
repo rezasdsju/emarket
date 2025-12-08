@@ -1,9 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // ✅ useEffect যোগ করুন
 import { Link, useLocation } from 'react-router-dom';
 
 const Navbar = ({ cartItemsCount = 0 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const location = useLocation();
+
+    // ✅ Bootstrap JS manually initialize করার জন্য
+    useEffect(() => {
+        // Bootstrap components initialize
+        if (typeof window !== 'undefined') {
+            // Bootstrap এর JavaScript components initialize
+            const navbarToggler = document.querySelector('.navbar-toggler');
+            if (navbarToggler) {
+                console.log('✅ Navbar toggler found in DOM');
+            }
+            
+            // Bootstrap tooltip, popover ইত্যাদি initialize করতে চাইলে
+            // const { Tooltip, Popover } = window.bootstrap;
+            // if (Tooltip) {
+            //     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            //     tooltipTriggerList.map(function (tooltipTriggerEl) {
+            //         return new Tooltip(tooltipTriggerEl);
+            //     });
+            // }
+        }
+    }, []);
 
     return (
         <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow fixed-top">
@@ -14,19 +35,22 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                     অর্গানিক বাজার
                 </Link>
                 
-                {/* Hamburger Button - React State ব্যবহার */}
+                {/* Hamburger Button - Bootstrap compatible */}
                 <button 
-                    className="navbar-toggler border-0" 
+                    className="navbar-toggler" 
                     type="button" 
-                    onClick={() => setIsOpen(!isOpen)}
+                    data-bs-toggle="collapse" 
+                    data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" 
                     aria-expanded={isOpen}
                     aria-label="Toggle navigation"
+                    onClick={() => setIsOpen(!isOpen)}
                 >
                     <span className="navbar-toggler-icon"></span>
                 </button>
                 
                 {/* Collapsible Menu */}
-                <div className={`collapse navbar-collapse ${isOpen ? 'show' : ''}`}>
+                <div className={`collapse navbar-collapse ${isOpen ? 'show' : ''}`} id="navbarNav">
                     <ul className="navbar-nav me-auto">
                         <li className="nav-item">
                             <Link 
@@ -107,6 +131,15 @@ const Navbar = ({ cartItemsCount = 0 }) => {
             
             {/* Custom CSS */}
             <style jsx>{`
+                .navbar {
+                    padding-top: 0.5rem;
+                    padding-bottom: 0.5rem;
+                }
+                
+                .navbar-brand {
+                    font-size: 1.5rem;
+                }
+                
                 @media (max-width: 991.98px) {
                     .navbar-collapse {
                         position: absolute;
@@ -115,18 +148,53 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                         right: 0;
                         z-index: 1000;
                         background: white;
+                        padding: 1rem;
+                        border-radius: 0 0 10px 10px;
+                        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
                     }
+                    
+                    .navbar-dark .navbar-collapse .nav-link {
+                        color: #333 !important;
+                        padding: 0.75rem 0;
+                        border-bottom: 1px solid #eee;
+                    }
+                    
+                    .navbar-dark .navbar-collapse .nav-link:last-child {
+                        border-bottom: none;
+                    }
+                    
+                    .navbar-dark .navbar-collapse .nav-link.active {
+                        color: #0d6efd !important;
+                        font-weight: 600;
+                    }
+                    
                     .navbar-collapse.show {
                         animation: slideDown 0.3s ease;
                     }
+                    
                     @keyframes slideDown {
-                        from { opacity: 0; transform: translateY(-10px); }
-                        to { opacity: 1; transform: translateY(0); }
+                        from { 
+                            opacity: 0; 
+                            transform: translateY(-10px); 
+                        }
+                        to { 
+                            opacity: 1; 
+                            transform: translateY(0); 
+                        }
                     }
                 }
+                
                 .navbar-toggler:focus {
                     outline: none;
-                    box-shadow: none;
+                    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+                }
+                
+                .nav-link {
+                    transition: all 0.3s ease;
+                }
+                
+                .nav-link:hover {
+                    transform: translateY(-2px);
                 }
             `}</style>
         </nav>

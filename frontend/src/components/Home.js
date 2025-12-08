@@ -9,28 +9,78 @@ const Home = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('all');
-    const [heroProducts, setHeroProducts] = useState([]); // ✅ শুধু পণ্য (ইমেজ সহ)
+    const [heroProducts, setHeroProducts] = useState([]);
     const [currentProductIndex, setCurrentProductIndex] = useState(0);
     
     const API_BASE_URL = 'https://organic.satbeta.top';
     
-    // ✅ ইমেজ URL তৈরি করার ফাংশন
-    const getImageUrl = (imagePath) => {
-        if (!imagePath) return null;
+    // ✅ ইমেজ URL তৈরি করার ফাংশন - FIXED VERSION
+    const getImageUrl = (imageField) => {
+        console.log("🔍 getImageUrl called with:", imageField);
         
-        if (imagePath.startsWith('http')) {
-            return imagePath;
+        // যদি string হয়
+        if (typeof imageField === 'string') {
+            if (!imageField || imageField.trim() === '') {
+                console.log("Empty image field, returning placeholder");
+                return 'https://via.placeholder.com/500x300.png/28a745/ffffff?text=Organic+Product';
+            }
+            
+            if (imageField.startsWith('http')) {
+                console.log("Direct URL found:", imageField);
+                return imageField;
+            }
+            
+            if (imageField.startsWith('/media/')) {
+                const url = `${API_BASE_URL}${imageField}`;
+                console.log("Building URL from /media/ path:", url);
+                return url;
+            }
+            
+            if (imageField.startsWith('media/')) {
+                const url = `${API_BASE_URL}/${imageField}`;
+                console.log("Building URL from media/ path:", url);
+                return url;
+            }
+            
+            const url = `${API_BASE_URL}/media/${imageField}`;
+            console.log("Building default URL:", url);
+            return url;
         }
         
-        if (imagePath.startsWith('/media/')) {
-            return `${API_BASE_URL}${imagePath}`;
+        // যদি object হয় (API থেকে আসলে)
+        if (imageField && typeof imageField === 'object') {
+            console.log("Image field is an object:", imageField);
+            
+            // 1. image_url field চেক
+            if (imageField.url) {
+                const url = getImageUrl(imageField.url);
+                console.log("Using object.url:", url);
+                return url;
+            }
+            
+            // 2. সরাসরি string এ convert করার চেষ্টা
+            if (imageField.image) {
+                const url = getImageUrl(imageField.image);
+                console.log("Using object.image:", url);
+                return url;
+            }
+            
+            // 3. toString() চেষ্টা
+            try {
+                const stringValue = String(imageField);
+                if (stringValue && stringValue !== '[object Object]') {
+                    const url = getImageUrl(stringValue);
+                    console.log("Using toString():", url);
+                    return url;
+                }
+            } catch (e) {
+                console.error("Failed to convert object to string:", e);
+            }
         }
         
-        if (imagePath.startsWith('media/')) {
-            return `${API_BASE_URL}/${imagePath}`;
-        }
-        
-        return `${API_BASE_URL}/media/${imagePath}`;
+        // Default fallback
+        console.warn("No valid image found, returning placeholder");
+        return 'https://via.placeholder.com/500x300.png/28a745/ffffff?text=Organic+Product';
     };
     
     useEffect(() => {
@@ -43,9 +93,9 @@ const Home = () => {
                     (prevIndex + 1) % heroProducts.length
                 );
             }
-        }, 5000); // 5 সেকেন্ড
+        }, 5000);
         
-        return () => clearInterval(interval); // Cleanup
+        return () => clearInterval(interval);
     }, [heroProducts.length]);
     
     const fetchData = async () => {
@@ -53,46 +103,67 @@ const Home = () => {
             setLoading(true);
             setError(null);
             
-            console.log('ডেটা লোড শুরু হচ্ছে...');
+            console.log('🚀 ডেটা লোড শুরু হচ্ছে...');
             
             const [productsResponse, categoriesResponse] = await Promise.all([
                 axios.get(`${API_BASE_URL}/api/products/`, {
-                    headers: { 'Accept': 'application/json' }
-                }).catch(err => {
-                    console.error('Products API Error:', err);
-                    return axios.get('http://127.0.0.1:8000/api/products/');
+                    headers: { 'Accept': 'application/json' },
+                    timeout: 10000
                 }),
-                
                 axios.get(`${API_BASE_URL}/api/categories/`, {
-                    headers: { 'Accept': 'application/json' }
-                }).catch(err => {
-                    console.error('Categories API Error:', err);
-                    return axios.get('http://127.0.0.1:8000/api/categories/');
+                    headers: { 'Accept': 'application/json' },
+                    timeout: 10000
                 })
             ]);
             
-            // ✅ পণ্য ডেটা প্রসেস
+            console.log('📦 Products API Response:', productsResponse.data);
+            
+            // ✅ পণ্য ডেটা প্রসেস - FIXED
             let productsData = [];
             if (productsResponse.data.results) {
                 productsData = productsResponse.data.results;
+                console.log(`✅ ${productsData.length} products found in results`);
             } else if (Array.isArray(productsResponse.data)) {
                 productsData = productsResponse.data;
+                console.log(`✅ ${productsData.length} products found in array`);
+            } else {
+                console.warn("⚠️ Unexpected API response format");
+                productsData = [];
             }
+            
+            // প্রতিটি পণ্যের ইমেজ ডিবাগ
+            productsData.forEach((product, index) => {
+                console.log(`📊 Product ${index + 1}: ${product.name}`, {
+                    hasImage: !!product.image,
+                    imageType: typeof product.image,
+                    imageValue: product.image,
+                    hasImageUrl: !!product.image_url,
+                    imageUrlValue: product.image_url
+                });
+            });
             
             setProducts(productsData);
             
-            // ✅ হিরো পণ্য (শুধু ইমেজ আছে এমন পণ্য)
-            const productsWithImages = productsData.filter(product => {
-                // ইমেজ আছে এবং available
-                return product.image && product.available;
+            // ✅ হিরো পণ্য নির্বাচন - FIXED LOGIC
+            // প্রথমে ইমেজ আছে এমন পণ্য
+            let heroCandidates = productsData.filter(product => {
+                const hasImage = product.image && product.image.toString().trim() !== '';
+                console.log(`🎯 ${product.name}: hasImage = ${hasImage}, image = ${product.image}`);
+                return hasImage;
             });
             
-            // যদি ৫টির কম ইমেজ থাকে, তাহলে প্রথম ৫টি পণ্য (ইমেজ ছাড়াও)
-            const heroProductsList = productsWithImages.length >= 5 
-                ? productsWithImages.slice(0, 5)
-                : productsData.slice(0, 5);
+            // যদি ৫টির কম হয়, তাহলে সব পণ্য যোগ করুন
+            if (heroCandidates.length < 5) {
+                heroCandidates = [...heroCandidates, ...productsData.slice(0, 5 - heroCandidates.length)];
+            }
             
-            setHeroProducts(heroProductsList);
+            // প্রথম ৫টি পণ্য নিন
+            heroCandidates = heroCandidates.slice(0, 5);
+            
+            console.log(`🎨 Selected ${heroCandidates.length} hero products:`, 
+                heroCandidates.map(p => ({ name: p.name, image: p.image })));
+            
+            setHeroProducts(heroCandidates);
             
             // ✅ ক্যাটাগরি ডেটা প্রসেস
             let categoriesData = [];
@@ -103,27 +174,22 @@ const Home = () => {
             }
             
             setCategories(categoriesData);
+            console.log(`🏷️ ${categoriesData.length} categories loaded`);
             
             setLoading(false);
             
         } catch (err) {
-            console.error('ডেটা লোড করতে সমস্যা:', err);
+            console.error('❌ ডেটা লোড করতে সমস্যা:', err);
             
             let errorMessage = 'ডেটা লোড করতে সমস্যা হচ্ছে।';
             
             if (err.response) {
-                console.error('Error Response Data:', err.response.data);
-                console.error('Error Response Status:', err.response.status);
-                
-                if (err.response.status === 404) {
-                    errorMessage = 'API এন্ডপয়েন্ট পাওয়া যায়নি। সার্ভার চেক করুন।';
-                } else if (err.response.status === 500) {
-                    errorMessage = 'সার্ভারে অভ্যন্তরীণ সমস্যা হয়েছে।';
-                }
+                console.error('Error Response:', err.response.status, err.response.data);
+                errorMessage = `সার্ভার এরর: ${err.response.status}`;
             } else if (err.request) {
-                errorMessage = 'সার্ভার রেসপন্স দিচ্ছে না। সার্ভার চালু আছে কিনা চেক করুন।';
+                errorMessage = 'সার্ভার রেসপন্স দিচ্ছে না।';
             } else {
-                errorMessage = `Network Error: ${err.message}`;
+                errorMessage = `নেটওয়ার্ক এরর: ${err.message}`;
             }
             
             setError(errorMessage);
@@ -160,7 +226,7 @@ const Home = () => {
                 const thirtyDaysAgo = new Date();
                 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
                 return products.filter(product => {
-                    const createdDate = new Date(product.created_at || product.date_added);
+                    const createdDate = new Date(product.created_at || product.created || product.date_added);
                     return createdDate > thirtyDaysAgo;
                 });
             case 'discount':
@@ -175,17 +241,13 @@ const Home = () => {
     // লোডিং স্টেট
     if (loading) {
         return (
-            <div className="container mt-5 text-center">
+            <div className="container mt-5 text-center" style={{ paddingTop: '80px' }}>
                 <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status">
                     <span className="visually-hidden">লোড হচ্ছে...</span>
                 </div>
                 <p className="mt-3 fs-5">অর্গানিক বাজার লোড হচ্ছে...</p>
-                <p className="text-muted">
-                    <small>API: {API_BASE_URL}/api/products/</small>
-                </p>
                 <div className="progress mt-3" style={{ height: '4px', maxWidth: '300px', margin: '0 auto' }}>
-                    <div className="progress-bar progress-bar-striped progress-bar-animated" 
-                         style={{ width: '100%' }}></div>
+                    <div className="progress-bar progress-bar-striped progress-bar-animated" style={{ width: '100%' }}></div>
                 </div>
             </div>
         );
@@ -194,7 +256,7 @@ const Home = () => {
     // এরর স্টেট
     if (error) {
         return (
-            <div className="container mt-5">
+            <div className="container mt-5" style={{ paddingTop: '80px' }}>
                 <div className="alert alert-danger alert-dismissible fade show" role="alert">
                     <h4 className="alert-heading">
                         <i className="bi bi-exclamation-triangle-fill me-2"></i>
@@ -207,24 +269,14 @@ const Home = () => {
                             <i className="bi bi-arrow-clockwise me-1"></i>
                             আবার চেষ্টা করুন
                         </button>
-                        <a 
-                            href={`${API_BASE_URL}/api/products/`} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="btn btn-outline-primary"
-                        >
-                            <i className="bi bi-box-arrow-up-right me-1"></i>
-                            API সরাসরি দেখুন
-                        </a>
-                        <a 
-                            href="/" 
+                        <button 
                             className="btn btn-outline-secondary"
+                            onClick={() => window.location.reload()}
                         >
                             <i className="bi bi-house me-1"></i>
                             হোমে ফিরে যান
-                        </a>
+                        </button>
                     </div>
-                    <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             </div>
         );
@@ -234,7 +286,7 @@ const Home = () => {
     const currentProduct = heroProducts[currentProductIndex];
     
     return (
-        <div className="home-page">
+        <div className="home-page" style={{ paddingTop: '80px' }}>
             {/* হিরো সেকশন - Admin পণ্য Slider */}
             <div className="hero-section bg-primary text-white py-5">
                 <div className="container">
@@ -258,13 +310,12 @@ const Home = () => {
                         </div>
                         
                         <div className="col-lg-6 text-center position-relative">
-                            {/* ✅ Slider Container */}
                             <div className="hero-slider-container">
                                 {currentProduct ? (
                                     <div className="hero-product-wrapper position-relative">
                                         {/* Admin-এ আপলোড করা ইমেজ */}
                                         <img 
-                                            src={getImageUrl(currentProduct.image) || 'https://via.placeholder.com/500x300?text=No+Image'}
+                                            src={getImageUrl(currentProduct.image)}
                                             alt={currentProduct.name}
                                             className="img-fluid rounded shadow"
                                             style={{ 
@@ -273,14 +324,20 @@ const Home = () => {
                                                 objectFit: 'cover'
                                             }}
                                             onError={(e) => {
-                                                e.target.src = 'https://via.placeholder.com/500x300?text=Image+Error';
+                                                console.error('❌ Image failed to load:', e.target.src);
+                                                e.target.src = 'https://via.placeholder.com/500x300.png/28a745/ffffff?text=Image+Error';
+                                            }}
+                                            onLoad={(e) => {
+                                                console.log('✅ Image loaded successfully:', e.target.src);
                                             }}
                                         />
                                         
                                         {/* পণ্যের তথ্য */}
                                         <div className="hero-product-info position-absolute bottom-0 start-0 w-100 p-3 text-start"
                                              style={{
-                                                 background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)'
+                                                 background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+                                                 borderBottomLeftRadius: '15px',
+                                                 borderBottomRightRadius: '15px'
                                              }}>
                                             <h4 className="text-white mb-1">{currentProduct.name}</h4>
                                             <p className="text-light mb-2" style={{ fontSize: '0.9rem' }}>
@@ -288,7 +345,7 @@ const Home = () => {
                                             </p>
                                             <div className="d-flex justify-content-between align-items-center">
                                                 <h5 className="text-warning mb-0">
-                                                    ৳{currentProduct.price?.toLocaleString('bn-BD') || '0'}
+                                                    ৳{currentProduct.price || '0'}
                                                 </h5>
                                                 <Link 
                                                     to={`/product/${currentProduct.id}`}
@@ -304,20 +361,20 @@ const Home = () => {
                                         <button 
                                             className="btn btn-light btn-sm position-absolute top-50 start-0 translate-middle-y"
                                             onClick={prevProduct}
-                                            style={{ left: '10px' }}
+                                            style={{ left: '10px', zIndex: 10 }}
                                         >
                                             <i className="bi bi-chevron-left"></i>
                                         </button>
                                         <button 
                                             className="btn btn-light btn-sm position-absolute top-50 end-0 translate-middle-y"
                                             onClick={nextProduct}
-                                            style={{ right: '10px' }}
+                                            style={{ right: '10px', zIndex: 10 }}
                                         >
                                             <i className="bi bi-chevron-right"></i>
                                         </button>
                                         
                                         {/* ✅ Image Counter */}
-                                        <div className="position-absolute top-0 end-0 m-2">
+                                        <div className="position-absolute top-0 end-0 m-2" style={{ zIndex: 10 }}>
                                             <span className="badge bg-dark bg-opacity-75">
                                                 {currentProductIndex + 1} / {heroProducts.length}
                                             </span>
@@ -325,14 +382,16 @@ const Home = () => {
                                     </div>
                                 ) : (
                                     // ✅ যদি কোনো পণ্য না থাকে
-                                    <div className="text-center py-5">
-                                        <i className="bi bi-image display-1 text-light opacity-50"></i>
-                                        <p className="text-light mt-3">Admin প্যানেলে পণ্য যোগ করুন</p>
-                                        <Link to={`${API_BASE_URL}/admin`} 
-                                              className="btn btn-outline-light btn-sm">
+                                    <div className="text-center py-5 border rounded bg-light">
+                                        <i className="bi bi-image display-1 text-primary opacity-50"></i>
+                                        <p className="text-dark mt-3">Admin প্যানেলে পণ্য যোগ করুন</p>
+                                        <a href={`${API_BASE_URL}/admin`} 
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           className="btn btn-outline-primary btn-sm">
                                             <i className="bi bi-gear me-1"></i>
                                             Admin Panel
-                                        </Link>
+                                        </a>
                                     </div>
                                 )}
                                 
@@ -361,7 +420,7 @@ const Home = () => {
                 </div>
             </div>
             
-            {/* বাকি কোড একই থাকবে */}
+            {/* Main Content */}
             <div className="container mt-5">
                 {/* স্ট্যাটাস বার */}
                 <div className="row mb-4">
@@ -433,6 +492,7 @@ const Home = () => {
                                 <Link 
                                     to={`/category/${category.slug || category.id}`}
                                     className="card category-card text-center h-100 border-0 shadow-sm text-decoration-none"
+                                    onClick={() => window.scrollTo(0, 0)}
                                 >
                                     <div className="card-body">
                                         <div className="category-icon mb-3 text-primary" style={{ fontSize: '2rem' }}>
@@ -575,6 +635,8 @@ const Home = () => {
             <style jsx>{`
                 .hero-section {
                     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                    margin-top: -80px;
+                    padding-top: 100px !important;
                 }
                 
                 .hero-slider-container {
@@ -591,10 +653,6 @@ const Home = () => {
                 .hero-product-wrapper:hover {
                     transform: scale(1.02);
                     box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-                }
-                
-                .hero-product-info {
-                    border-radius: 0 0 15px 15px;
                 }
                 
                 .category-card {
