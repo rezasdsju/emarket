@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react'; // ✅ useEffect যোগ করুন
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const Navbar = ({ cartItemsCount = 0 }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
     const location = useLocation();
+    const navigate = useNavigate();
 
     // ✅ Bootstrap JS manually initialize করার জন্য
     useEffect(() => {
@@ -14,17 +16,19 @@ const Navbar = ({ cartItemsCount = 0 }) => {
             if (navbarToggler) {
                 console.log('✅ Navbar toggler found in DOM');
             }
-            
-            // Bootstrap tooltip, popover ইত্যাদি initialize করতে চাইলে
-            // const { Tooltip, Popover } = window.bootstrap;
-            // if (Tooltip) {
-            //     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            //     tooltipTriggerList.map(function (tooltipTriggerEl) {
-            //         return new Tooltip(tooltipTriggerEl);
-            //     });
-            // }
         }
     }, []);
+
+    // ✅ সার্চ হ্যান্ডলার
+    const handleSearch = (e) => {
+        e.preventDefault();
+        if (searchTerm.trim()) {
+            // সার্চ পেজে নিয়ে যান
+            navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
+            setSearchTerm(''); // সার্চ বক্স খালি করুন
+            setIsOpen(false); // মোবাইলে মেনু বন্ধ করুন
+        }
+    };
 
     return (
         <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow fixed-top">
@@ -34,6 +38,58 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                     <i className="bi bi-shop me-2"></i>
                     অর্গানিক বাজার
                 </Link>
+                
+                {/* Desktop Search Bar - Large screens only */}
+                <div className="d-none d-lg-flex align-items-center" style={{ flexGrow: 1, maxWidth: '400px', margin: '0 20px' }}>
+                    <form onSubmit={handleSearch} className="w-100">
+                        <div className="input-group">
+                            <input 
+                                type="search" 
+                                className="form-control" 
+                                placeholder="পণ্য খুঁজুন (যেমন: চাল, ডাল, তেল...)"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                style={{ 
+                                    borderRight: 'none',
+                                    borderRadius: '20px 0 0 20px',
+                                    fontSize: '0.9rem'
+                                }}
+                            />
+                            <button 
+                                className="btn btn-light" 
+                                type="submit"
+                                style={{ 
+                                    borderRadius: '0 20px 20px 0',
+                                    paddingLeft: '15px',
+                                    paddingRight: '15px'
+                                }}
+                            >
+                                <i className="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                {/* Mobile Search Toggle Button */}
+                <div className="d-lg-none me-2">
+                    <button 
+                        className="btn btn-outline-light"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#mobileSearch"
+                        aria-expanded="false"
+                        aria-controls="mobileSearch"
+                        onClick={() => {
+                            // অন্য collapse বন্ধ রাখা
+                            const navbarCollapse = document.getElementById('navbarNav');
+                            if (navbarCollapse.classList.contains('show')) {
+                                navbarCollapse.classList.remove('show');
+                            }
+                        }}
+                    >
+                        <i className="bi bi-search"></i>
+                    </button>
+                </div>
                 
                 {/* Hamburger Button - Bootstrap compatible */}
                 <button 
@@ -49,6 +105,26 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                     <span className="navbar-toggler-icon"></span>
                 </button>
                 
+                {/* Mobile Search (Collapsible) */}
+                <div className="collapse" id="mobileSearch">
+                    <div className="container py-2 d-lg-none">
+                        <form onSubmit={handleSearch} className="d-flex">
+                            <div className="input-group">
+                                <input 
+                                    type="search" 
+                                    className="form-control" 
+                                    placeholder="পণ্য খুঁজুন..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                                <button className="btn btn-light" type="submit">
+                                    <i className="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
                 {/* Collapsible Menu */}
                 <div className={`collapse navbar-collapse ${isOpen ? 'show' : ''}`} id="navbarNav">
                     <ul className="navbar-nav me-auto">
@@ -56,7 +132,14 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                             <Link 
                                 className={`nav-link ${location.pathname === '/' ? 'active fw-bold' : ''}`} 
                                 to="/"
-                                onClick={() => setIsOpen(false)}
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    // মোবাইল সার্চ বন্ধ করুন
+                                    const mobileSearch = document.getElementById('mobileSearch');
+                                    if (mobileSearch.classList.contains('show')) {
+                                        mobileSearch.classList.remove('show');
+                                    }
+                                }}
                             >
                                 <i className="bi bi-house-door me-1"></i>
                                 হোম
@@ -82,6 +165,18 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                             >
                                 <i className="bi bi-tags me-1"></i>
                                 ক্যাটাগরি
+                            </Link>
+                        </li>
+                        
+                        {/* ✅ সার্চ মেনু আইটেম যোগ করা হয়েছে */}
+                        <li className="nav-item d-lg-none">
+                            <Link 
+                                className={`nav-link ${location.pathname === '/search' ? 'active fw-bold' : ''}`} 
+                                to="/search"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                <i className="bi bi-search me-1"></i>
+                                সার্চ
                             </Link>
                         </li>
                         
@@ -113,19 +208,48 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                         </li>
                     </ul>
                     
-                    {/* Search Form */}
-                    <form className="d-flex">
-                        <div className="input-group input-group-sm">
-                            <input 
-                                type="search" 
-                                className="form-control" 
-                                placeholder="পণ্য খুঁজুন..."
-                            />
-                            <button className="btn btn-light" type="submit">
-                                <i className="bi bi-search"></i>
-                            </button>
+                    {/* Desktop Cart Icon (Right side) */}
+                    <div className="d-none d-lg-flex align-items-center">
+                        <Link 
+                            to="/cart" 
+                            className="nav-link text-white position-relative"
+                            title="শপিং কার্ট"
+                            onClick={() => setIsOpen(false)}
+                        >
+                            <i className="bi bi-cart3 fs-5"></i>
+                            {cartItemsCount > 0 && (
+                                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    {cartItemsCount}
+                                    <span className="visually-hidden">কার্ট আইটেম</span>
+                                </span>
+                            )}
+                        </Link>
+                    </div>
+                    
+                    {/* Mobile Quick Search Suggestions */}
+                    <div className="d-lg-none mt-3">
+                        <div className="card">
+                            <div className="card-body p-2">
+                                <p className="small text-muted mb-2">দ্রুত সার্চ:</p>
+                                <div className="d-flex flex-wrap gap-1">
+                                    {['চাল', 'তেল', 'মধু', 'ডাল', 'মসলা'].map((term) => (
+                                        <button
+                                            key={term}
+                                            type="button"
+                                            className="btn btn-sm btn-outline-primary"
+                                            onClick={() => {
+                                                setSearchTerm(term);
+                                                navigate(`/search?q=${encodeURIComponent(term)}`);
+                                                setIsOpen(false);
+                                            }}
+                                        >
+                                            {term}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
             
@@ -134,12 +258,20 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                 .navbar {
                     padding-top: 0.5rem;
                     padding-bottom: 0.5rem;
+                    z-index: 1030;
                 }
                 
                 .navbar-brand {
                     font-size: 1.5rem;
                 }
                 
+                /* Desktop search bar */
+                .input-group input:focus {
+                    box-shadow: none;
+                    border-color: #dee2e6;
+                }
+                
+                /* Mobile responsive */
                 @media (max-width: 991.98px) {
                     .navbar-collapse {
                         position: absolute;
@@ -151,6 +283,8 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                         padding: 1rem;
                         border-radius: 0 0 10px 10px;
                         box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+                        max-height: 80vh;
+                        overflow-y: auto;
                     }
                     
                     .navbar-dark .navbar-collapse .nav-link {
@@ -172,6 +306,20 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                         animation: slideDown 0.3s ease;
                     }
                     
+                    #mobileSearch {
+                        position: absolute;
+                        top: 100%;
+                        left: 0;
+                        right: 0;
+                        background: white;
+                        z-index: 1001;
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                    }
+                    
+                    #mobileSearch.collapse.show {
+                        animation: fadeIn 0.3s ease;
+                    }
+                    
                     @keyframes slideDown {
                         from { 
                             opacity: 0; 
@@ -182,11 +330,22 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                             transform: translateY(0); 
                         }
                     }
+                    
+                    @keyframes fadeIn {
+                        from { 
+                            opacity: 0; 
+                            transform: translateY(-5px); 
+                        }
+                        to { 
+                            opacity: 1; 
+                            transform: translateY(0); 
+                        }
+                    }
                 }
                 
                 .navbar-toggler:focus {
                     outline: none;
-                    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+                    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
                 }
                 
                 .nav-link {
@@ -195,6 +354,27 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                 
                 .nav-link:hover {
                     transform: translateY(-2px);
+                }
+                
+                .btn-outline-light:hover {
+                    background-color: rgba(255, 255, 255, 0.1);
+                }
+                
+                /* Cart badge animation */
+                .badge {
+                    animation: pulse 1.5s infinite;
+                }
+                
+                @keyframes pulse {
+                    0% {
+                        transform: scale(1);
+                    }
+                    50% {
+                        transform: scale(1.1);
+                    }
+                    100% {
+                        transform: scale(1);
+                    }
                 }
             `}</style>
         </nav>

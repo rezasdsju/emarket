@@ -8,6 +8,7 @@ import Home from './components/Home';
 import ProductDetail from './components/ProductDetail';
 import Cart from './components/Cart';
 import CategoryProducts from './components/CategoryProducts';
+import SearchResults from './components/SearchResults'; // ✅ নতুন লাইন যোগ হয়েছে
 
 function App() {
     const [cartItems, setCartItems] = useState([]);
@@ -119,6 +120,10 @@ function App() {
                             } 
                         />
                         <Route path="/category/:slug" element={<CategoryProducts />} />
+                        
+                        {/* ✅ নতুন সার্চ রেজাল্টস রাউট যোগ হয়েছে */}
+                        <Route path="/search" element={<SearchResults />} />
+                        
                         {/* 404 Page */}
                         <Route 
                             path="*" 

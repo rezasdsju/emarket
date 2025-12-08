@@ -90,6 +90,8 @@ DATABASES = {
         'CONN_MAX_AGE': 600,  # Connection pooling for production
         'OPTIONS': {
             'connect_timeout': 10,
+            # ✅ PostgreSQL এক্সটেনশন সাপোর্টের জন্য
+            'options': '-c search_path=public',
         }
     }
 }
@@ -209,8 +211,11 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/day',  # Anonymous users
-        'user': '1000/day'  # Authenticated users
-    }
+        'user': '1000/day',  # Authenticated users
+        'search': '200/hour',  # ✅ নতুন: সার্চের জন্য আলাদা থ্রোটল
+    },
+    # ✅ সার্চ প্যারামিটার সেটিংস
+    'SEARCH_PARAM': 'q',
 }
 
 # ========== LOGGING CONFIGURATION ==========
@@ -239,6 +244,12 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
+        'search_log': {  # ✅ নতুন: সার্চ লগের জন্য
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/search.log'),
+            'formatter': 'simple',
+        },
     },
     'loggers': {
         'django': {
@@ -248,6 +259,11 @@ LOGGING = {
         },
         'api': {
             'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'api.search': {  # ✅ নতুন: সার্চ লগার
+            'handlers': ['search_log', 'console'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -262,3 +278,29 @@ LOGGING = {
 # EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 # EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 # DEFAULT_FROM_EMAIL = 'noreply@organic.satbeta.top'
+
+# ========== POSTGRESQL FULL-TEXT SEARCH SETTINGS ==========
+# ✅ Full-text search কনফিগারেশন
+POSTGRES_SEARCH_CONFIG = {
+    'default_language': 'english',
+    'weights': {
+        'A': 1.0,   # নামের জন্য
+        'B': 0.4,   # বিবরণের জন্য  
+        'C': 0.2,   # ক্যাটাগরির জন্য
+        'D': 0.1,   # ট্যাগের জন্য
+    }
+}
+
+# ========== SEARCH SETTINGS ==========
+# ✅ সার্চ সেটিংস
+SEARCH_SETTINGS = {
+    'MIN_SEARCH_LENGTH': 2,  # সর্বনিম্ন সার্চ লেংথ
+    'MAX_RESULTS': 100,      # সর্বোচ্চ ফলাফল
+    'AUTOCOMPLETE_LIMIT': 10,  # অটোকমপ্লিট লিমিট
+    'FUZZY_SEARCH': True,    # ফাজি সার্চ চালু
+    'USE_POSTGRES_SEARCH': True,  # PostgreSQL Full-Text Search ব্যবহার
+}
+
+# ✅ সার্চ লগ ডিরেক্টরি তৈরি
+SEARCH_LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(SEARCH_LOG_DIR, exist_ok=True)

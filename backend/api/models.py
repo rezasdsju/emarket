@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.postgres.search import SearchVector, SearchVectorField
 
 class Category(models.Model):
     name = models.CharField(max_length=100, verbose_name="Category Name")
@@ -158,3 +159,51 @@ class Payment(models.Model):
     
     def __str__(self):
         return f"Payment #{self.transaction_id} - {self.order.name}"
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# models.py - Product model-এ যোগ করুন:
+
+from django.db import models
+from django.contrib.postgres.search import SearchVectorField
+from django.contrib.postgres.indexes import GinIndex
+
+class Product(models.Model):
+    # ... existing fields ...
+    
+    # সার্চ অপটিমাইজেশনের জন্য
+    search_vector = SearchVectorField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-created']
+        verbose_name = "Product"
+        verbose_name_plural = "Products"
+        indexes = [
+            GinIndex(fields=['search_vector']),  # ফাস্ট সার্চের জন্য
+            models.Index(fields=['name', 'category']),
+            models.Index(fields=['available', 'price']),
+        ]
+    
+    def save(self, *args, **kwargs):
+        # সার্চ ভেক্টর আপডেট
+        super().save(*args, **kwargs)
+        Product.objects.filter(pk=self.pk).update(
+            search_vector=SearchVector('name', 'description', 'category__name')
+        )

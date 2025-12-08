@@ -188,3 +188,254 @@ class PaymentViewSet(viewsets.ModelViewSet):
         
         # এখানে bKash/Rocket API কল করতে হবে (পরে যোগ করব)
         # payment.payment_method অনুযায়ী আলাদা API কল হবে
+
+
+
+
+
+
+
+
+# api/views.py এর শেষে এই ভিউগুলো যোগ করুন
+
+from django.db.models import Q
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+@api_view(['GET'])
+def search_products(request):
+    """
+    উন্নত সার্চ ফিচার - ফুল-টেক্সট সার্চ
+    """
+    query = request.GET.get('q', '').strip()
+    category_slug = request.GET.get('category', None)
+    min_price = request.GET.get('min_price', None)
+    max_price = request.GET.get('max_price', None)
+    
+    if not query:
+        return Response({
+            'success': False,
+            'error': 'সার্চ ক্যোয়ারী প্রয়োজন'
+        }, status=400)
+    
+    # সার্চ ক্যোয়ারী প্রসেসিং
+    search_terms = query.split()
+    
+    # প্রোডাক্ট কুয়েরি
+    products_qs = Product.objects.filter(available=True)
+    
+    # ক্যাটাগরি ফিল্টার
+    if category_slug:
+        try:
+            category = Category.objects.get(slug=category_slug)
+            products_qs = products_qs.filter(category=category)
+        except Category.DoesNotExist:
+            pass
+    
+    # প্রাইস ফিল্টার
+    if min_price:
+        try:
+            products_qs = products_qs.filter(price__gte=float(min_price))
+        except:
+            pass
+    
+    if max_price:
+        try:
+            products_qs = products_qs.filter(price__lte=float(max_price))
+        except:
+            pass
+    
+    # মাল্টিপল ফিল্ডে সার্চ
+    q_objects = Q()
+    
+    for term in search_terms:
+        if len(term) >= 2:  # অন্তত ২ অক্ষরের শব্দ
+            q_objects |= (
+                Q(name__icontains=term) |
+                Q(description__icontains=term) |
+                Q(category__name__icontains=term)
+            )
+    
+    # যদি কোনো টার্ম না মেলে, তাহলে সম্পূর্ণ ক্যোয়ারী দিয়ে সার্চ
+    if not q_objects:
+        q_objects = (
+            Q(name__icontains=query) |
+            Q(description__icontains=query) |
+            Q(category__name__icontains=query)
+        )
+    
+    products = products_qs.filter(q_objects).distinct()
+    
+    # রিলেভেন্স স্কোরিং (আপনার প্রয়োজন অনুযায়ী এডিট করুন)
+    def calculate_relevance(product, query):
+        score = 0
+        
+        # নামে এক্সাক্ট ম্যাচ
+        if query.lower() in product.name.lower():
+            score += 100
+        
+        # নামে পার্শিয়াল ম্যাচ
+        for term in search_terms:
+            if term.lower() in product.name.lower():
+                score += 50
+        
+        # ডেসক্রিপশনে ম্যাচ
+        for term in search_terms:
+            if term.lower() in (product.description or '').lower():
+                score += 20
+        
+        # ক্যাটাগরিতে ম্যাচ
+        for term in search_terms:
+            if term.lower() in (product.category.name or '').lower():
+                score += 30
+        
+        # জনপ্রিয় পণ্যের বোনাস
+        if product.featured:
+            score += 10
+        
+        return score
+    
+    # প্রোডাক্ট লিস্ট তৈরি
+    product_list = []
+    for product in products:
+        serializer = ProductSerializer(product, context={'request': request})
+        product_data = serializer.data
+        product_data['relevance_score'] = calculate_relevance(product, query)
+        product_list.append(product_data)
+    
+    # রিলেভেন্স অনুসারে সর্টিং
+    product_list.sort(key=lambda x: x['relevance_score'], reverse=True)
+    
+    # পেজিনেশন
+    page = request.GET.get('page', 1)
+    try:
+        page = int(page)
+    except:
+        page = 1
+    
+    items_per_page = 20
+    total_items = len(product_list)
+    total_pages = (total_items + items_per_page - 1) // items_per_page
+    
+    start_index = (page - 1) * items_per_page
+    end_index = min(start_index + items_per_page, total_items)
+    
+    paginated_products = product_list[start_index:end_index]
+    
+    return Response({
+        'success': True,
+        'query': query,
+        'total_results': total_items,
+        'total_pages': total_pages,
+        'current_page': page,
+        'products': paginated_products,
+        'filters': {
+            'category': category_slug,
+            'min_price': min_price,
+            'max_price': max_price
+        }
+    })
+
+
+@api_view(['GET'])
+def autocomplete_suggestions(request):
+    """
+    অটোকমপ্লিট সুজেশন এন্ডপয়েন্ট
+    """
+    query = request.GET.get('q', '').strip().lower()
+    
+    if len(query) < 2:
+        return Response({'suggestions': []})
+    
+    # পণ্যের নাম থেকে সুজেশন
+    product_suggestions = Product.objects.filter(
+        name__icontains=query,
+        available=True
+    ).values('name', 'slug', 'id')[:10]
+    
+    # ক্যাটাগরি থেকে সুজেশন
+    category_suggestions = Category.objects.filter(
+        name__icontains=query
+    ).values('name', 'slug', 'id')[:5]
+    
+    # ইউনিক নাম সংগ্রহ
+    suggestions = []
+    seen_names = set()
+    
+    # পণ্য সুজেশন
+    for product in product_suggestions:
+        name = product['name']
+        if name not in seen_names:
+            suggestions.append({
+                'type': 'product',
+                'name': name,
+                'slug': product['slug'],
+                'id': product['id'],
+                'url': f'/product/{product["id"]}'
+            })
+            seen_names.add(name)
+    
+    # ক্যাটাগরি সুজেশন
+    for category in category_suggestions:
+        name = category['name']
+        if name not in seen_names:
+            suggestions.append({
+                'type': 'category',
+                'name': name,
+                'slug': category['slug'],
+                'id': category['id'],
+                'url': f'/category/{category["slug"]}'
+            })
+            seen_names.add(name)
+    
+    # জনপ্রিয় সার্চ টার্মস (স্ট্যাটিক বা ডাইনামিক)
+    popular_searches = [
+        'খেজুর', 'চেরি ফল', 'কাট বাদাম', 'দেশি বাদাম', 'মধু', 
+        'কিচমিচ', 'আখরোট', 'হানি নাট'
+    ]
+    
+    for term in popular_searches:
+        if query in term.lower() and term not in seen_names:
+            suggestions.append({
+                'type': 'popular',
+                'name': term,
+                'slug': term.lower().replace(' ', '-'),
+                'url': f'/search?q={term}'
+            })
+            seen_names.add(term)
+    
+    return Response({
+        'query': query,
+        'suggestions': suggestions[:15]  # সর্বোচ্চ ১৫টি
+    })
+
+
+@api_view(['GET'])
+def search_statistics(request):
+    """
+    সার্চ স্ট্যাটিস্টিক্স এবং ট্রেন্ডিং প্রোডাক্টস
+    """
+    # ট্রেন্ডিং পণ্য (সর্বশিক ক্রয়কৃত/ভিউকৃত)
+    trending_products = Product.objects.filter(
+        available=True
+    ).order_by('-created')[:10]
+    
+    # জনপ্রিয় ক্যাটাগরি
+    popular_categories = Category.objects.annotate(
+        product_count=models.Count('products')
+    ).order_by('-product_count')[:8]
+    
+    trending_serializer = ProductSerializer(trending_products, many=True, context={'request': request})
+    category_serializer = CategorySerializer(popular_categories, many=True)
+    
+    return Response({
+        'trending_products': trending_serializer.data,
+        'popular_categories': category_serializer.data,
+        'popular_searches': [
+            {'term': 'আজওয়া খেজুর', 'count': 125},
+            {'term': 'পাহাড়ি মধু', 'count': 98},
+            {'term': 'কিচমিচ', 'count': 76},
+            {'term': 'আখরোট', 'count': 65},
+            {'term': 'চেরি ফল', 'count': 54},
+        ]
+    })
