@@ -25,7 +25,7 @@ ALLOWED_HOSTS = [
     '161.248.189.70',
     'localhost',
     '127.0.0.1',
-    '*',  # সব হোস্টের জন্য (প্রোডাকশনে সরিয়ে দিন)
+    '*',  # সব হোস্টের জন্য
 ]
 
 # ========== APPLICATION DEFINITION ==========
@@ -218,9 +218,12 @@ REST_FRAMEWORK = {
 }
 
 # ========== LOGGING CONFIGURATION (সঠিক ও মেয়াদি) ==========
-# লগ ডিরেক্টরি তৈরি
+# লগ ডিরেক্টরি
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
-os.makedirs(LOG_DIR, exist_ok=True)
+
+# লগ ডিরেক্টরি না থাকলে তৈরি করুন
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR, mode=0o755)
 
 LOGGING = {
     'version': 1,
@@ -242,26 +245,20 @@ LOGGING = {
         },
         'django_file': {
             'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'logging.FileHandler',
             'filename': os.path.join(LOG_DIR, 'django_error.log'),
-            'maxBytes': 5 * 1024 * 1024,  # 5 MB
-            'backupCount': 5,
             'formatter': 'verbose',
         },
         'app_file': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'logging.FileHandler',
             'filename': os.path.join(LOG_DIR, 'app.log'),
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 10,
             'formatter': 'verbose',
         },
         'search_file': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'logging.FileHandler',
             'filename': os.path.join(LOG_DIR, 'search.log'),
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 5,
             'formatter': 'simple',
         },
     },
@@ -278,11 +275,6 @@ LOGGING = {
         },
         'api.search': {
             'handlers': ['console', 'search_file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'gunicorn.error': {
-            'handlers': ['console', 'django_file'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -322,8 +314,5 @@ GUNICORN_CONFIG = {
     'workers': 3,
     'bind': '127.0.0.1:8001',
     'timeout': 120,
-    'keepalive': 5,
     'worker_class': 'sync',
-    'max_requests': 1000,
-    'max_requests_jitter': 50,
 }
