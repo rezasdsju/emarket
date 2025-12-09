@@ -338,7 +338,7 @@ const SearchResults = () => {
             <div className="mt-5 pt-4 border-top">
                 <h5 className="mb-3">সম্পর্কিত সার্চ টার্মস</h5>
                 <div className="d-flex flex-wrap gap-2">
-                    {['চাল', 'ডাল', 'তেল', 'মসলা', 'মধু', 'অর্গানিক', 'স্বাস্থ্যকর'].map(term => (
+                    {['মধু', 'আখরোট', 'কিচমিচ', 'বাদাম', 'চেরিফল', 'কালজিরা', 'হানি নাট'].map(term => (
                         <button
                             key={term}
                             className="btn btn-outline-secondary"

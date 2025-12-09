@@ -131,7 +131,7 @@ const SearchBar = () => {
                     <input
                         type="text"
                         className="form-control"
-                        placeholder="পণ্য খুঁজুন (যেমন: চাল, ডাল, তেল, মধু...)"
+                        placeholder="পণ্য খুঁজুন (যেমন: খেজুর, মধু, আখরোট, বাদাম...)"
                         value={searchTerm}
                         onChange={(e) => {
                             setSearchTerm(e.target.value);
