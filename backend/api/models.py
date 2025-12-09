@@ -41,10 +41,18 @@ class Product(models.Model):
     created = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated = models.DateTimeField(auto_now=True, verbose_name="Updated At")
     
+    # সার্চ অপটিমাইজেশনের জন্য নতুন ফিল্ড (সিম্পল ভার্সন)
+    search_vector = SearchVectorField(null=True, blank=True)
+    
     class Meta:
         ordering = ['-created']
         verbose_name = "Product"
         verbose_name_plural = "Products"
+        # সিম্পল indexes - কোনো error নেই
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['category']),
+        ]
     
     def __str__(self):
         return self.name
@@ -54,6 +62,18 @@ class Product(models.Model):
         if self.image and hasattr(self.image, 'url'):
             return self.image.url
         return None
+    
+    def update_search_vector(self):
+        """Search vector আপডেট করার মেথড (ম্যানুয়ালি কল করতে হবে)"""
+        try:
+            from django.contrib.postgres.search import SearchVector
+            Product.objects.filter(pk=self.pk).update(
+                search_vector=SearchVector('name', weight='A') +
+                              SearchVector('description', weight='B')
+            )
+        except Exception:
+            # If PostgreSQL extensions not available, skip
+            pass
 
 
 class Order(models.Model):
@@ -113,24 +133,8 @@ class OrderItem(models.Model):
     
     def get_total_price(self):
         return self.price * self.quantity
-    
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# models.py-তে নিচের ক্লাস যোগ করুন (Order মডেলের পরে)
 class Payment(models.Model):
     ORDER_STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -159,54 +163,3 @@ class Payment(models.Model):
     
     def __str__(self):
         return f"Payment #{self.transaction_id} - {self.order.name}"
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# models.py - Product model-এ যোগ করুন:
-
-from django.db import models
-from django.contrib.postgres.search import SearchVectorField
-from django.contrib.postgres.indexes import GinIndex
-
-class Product(models.Model):
-    # ... existing fields ...
-    
-    # সার্চ অপটিমাইজেশনের জন্য
-    search_vector = SearchVectorField(null=True, blank=True)
-    
-    class Meta:
-        ordering = ['-created']
-        verbose_name = "Product"
-        verbose_name_plural = "Products"
-        indexes = [
-            models.Index(fields=['search_vector']),  # GinIndex ব্যবহার না করে
-            models.Index(fields=['name']),
-            models.Index(fields=['category']),
-            models.Index(fields=['available']),
-            models.Index(fields=['price']),
-            models.Index(fields=['created']), 
-        ]
-    
-    def save(self, *args, **kwargs):
-        # সার্চ ভেক্টর আপডেট
-        super().save(*args, **kwargs)
-        Product.objects.filter(pk=self.pk).update(
-            search_vector=SearchVector('name', 'description', 'category__name')
-        )
