@@ -46,7 +46,7 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                             <input 
                                 type="search" 
                                 className="form-control" 
-                                placeholder="পণ্য খুঁজুন (যেমন: চাল, ডাল, তেল...)"
+                                placeholder="পণ্য খুঁজুন (যেমন: মধু, কিচমিচ, আখরোট, বাদাম, খেজুর...)"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 style={{ 
@@ -232,7 +232,7 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                             <div className="card-body p-2">
                                 <p className="small text-muted mb-2">দ্রুত সার্চ:</p>
                                 <div className="d-flex flex-wrap gap-1">
-                                    {['চাল', 'তেল', 'মধু', 'ডাল', 'মসলা'].map((term) => (
+                                    {['মধু', 'কিচমিচ', ' আখরোট', 'বাদাম', 'খেজুর'].map((term) => (
                                         <button
                                             key={term}
                                             type="button"

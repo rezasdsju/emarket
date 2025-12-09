@@ -13,13 +13,17 @@ const Home = () => {
     const [currentProductIndex, setCurrentProductIndex] = useState(0);
     
     const API_BASE_URL = 'https://organic.satbeta.top';
-    const WHATSAPP_NUMBER = '01722292603';
+    const WHATSAPP_NUMBER = '+8801722292603'; // ✅ Country code যোগ করা হয়েছে
     
-    // WhatsApp মেসেজ ফাংশন
+    // WhatsApp মেসেজ ফাংশন - FIXED
     const sendWhatsAppMessage = () => {
         const message = "Hello! I'm interested in your organic products. Can you help me?";
         const encodedMessage = encodeURIComponent(message);
+        
+        // WhatsApp লিংক তৈরি - IMPORTANT: + চিহ্ন সহ
         const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+        
+        console.log('WhatsApp URL:', whatsappUrl);
         window.open(whatsappUrl, '_blank');
     };
     
@@ -296,7 +300,7 @@ const Home = () => {
     
     return (
         <div className="home-page" style={{ paddingTop: '80px' }}>
-            {/* WhatsApp Floating Button */}
+            {/* WhatsApp Floating Button - FIXED */}
             <div 
                 className="whatsapp-float"
                 onClick={sendWhatsAppMessage}
