@@ -133,7 +133,7 @@ const SearchBar = () => {
                         className="form-control"
                         placeholder="পণ্য খুঁজুন (যেমন: খেজুর, মধু, আখরোট, বাদাম...)"
                         value={searchTerm}
-                        onChange={(e) => {
+                        onChange={(e) => { 
                             setSearchTerm(e.target.value);
                             setError(null);
                         }}
