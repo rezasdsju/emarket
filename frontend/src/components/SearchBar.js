@@ -39,8 +39,11 @@ const SearchBar = () => {
             const response = await axios.get(
                 `${API_BASE_URL}/api/search/autocomplete/?q=${encodeURIComponent(searchTerm)}`,
                 {
-                    headers: { 'Accept': 'application/json' },
-                    timeout: 5000  // ✅ Timeout যোগ করুন
+                    headers: { 
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json; charset=utf-8'
+                    },
+                    timeout: 5000
                 }
             );
             setSuggestions(response.data.suggestions || []);
@@ -67,8 +70,11 @@ const SearchBar = () => {
             const response = await axios.get(
                 `${API_BASE_URL}/api/search/?q=${encodeURIComponent(searchTerm)}`,
                 {
-                    headers: { 'Accept': 'application/json' },
-                    timeout: 10000  // ✅ Timeout যোগ করুন
+                    headers: { 
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json; charset=utf-8'
+                    },
+                    timeout: 10000
                 }
             );
             
@@ -80,11 +86,9 @@ const SearchBar = () => {
         } catch (error) {
             console.error('Search error:', error);
             
-            // ✅ User-friendly error messages
             if (error.code === 'ECONNABORTED') {
                 setError('সার্চ রিকোয়েস্ট টাইমআউট হয়েছে। আবার চেষ্টা করুন।');
             } else if (error.response) {
-                // Server responded with error
                 if (error.response.status === 400) {
                     setError('সার্চ ক্যোয়ারী ভুল ফর্ম্যাট।');
                 } else if (error.response.status === 500) {
@@ -125,143 +129,175 @@ const SearchBar = () => {
     };
     
     return (
-        <div className="search-container" ref={searchRef}>
-            <form onSubmit={handleSearch} className="d-flex">
-                <div className="input-group">
-                    <input
-                        type="text"
-                        className="form-control"
-                        placeholder="পণ্য খুঁজুন (যেমন: খেজুর, মধু, আখরোট, বাদাম...)"
-                        value={searchTerm}
-                        onChange={(e) => { 
-                            setSearchTerm(e.target.value);
-                            setError(null);
-                        }}
-                        onFocus={() => setShowSuggestions(true)}
-                        aria-label="Search products"
-                        style={{
-                            borderRight: 'none',
-                            borderRadius: '20px 0 0 20px',
-                            paddingLeft: '20px'
-                        }}
-                    />
-                    
-                    <button 
-                        className="btn btn-primary" 
-                        type="submit"
-                        disabled={loading || !searchTerm.trim()}
-                        style={{
-                            borderRadius: '0 20px 20px 0',
-                            padding: '0 20px'
-                        }}
-                    >
-                        {loading ? (
-                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        ) : (
-                            <i className="bi bi-search"></i>
-                        )}
-                    </button>
-                </div>
-            </form>
-            
-            {/* Error Message */}
-            {error && (
-                <div className="alert alert-warning alert-dismissible fade show mt-2" role="alert" style={{ fontSize: '0.9rem' }}>
-                    <i className="bi bi-exclamation-triangle me-2"></i>
-                    {error}
-                    <button type="button" className="btn-close" onClick={() => setError(null)}></button>
-                </div>
-            )}
-            
-            {/* অটোকমপ্লিট সুজেশন ড্রপডাউন */}
-            {showSuggestions && suggestions.length > 0 && (
-                <div className="suggestions-dropdown shadow-lg border rounded bg-white mt-1 position-absolute"
-                     style={{
-                         width: '100%',
-                         maxHeight: '400px',
-                         overflowY: 'auto',
-                         zIndex: 1050
-                     }}>
-                    <div className="suggestion-header p-2 border-bottom bg-light">
-                        <small className="text-muted">
-                            <i className="bi bi-lightbulb me-1"></i>
-                            সার্চ সুজেশন ({suggestions.length})
-                        </small>
-                    </div>
-                    
-                    {suggestions.map((suggestion, index) => (
-                        <div
-                            key={`${suggestion.type}-${index}`}
-                            className="suggestion-item p-3 border-bottom hover-bg"
-                            onClick={() => handleSuggestionClick(suggestion)}
-                            style={{
-                                cursor: 'pointer',
-                                transition: 'background-color 0.2s'
-                            }}
-                        >
-                            <div className="d-flex align-items-center">
-                                <div className="suggestion-icon me-3">
-                                    {suggestion.type === 'product' ? (
-                                        <i className="bi bi-box text-primary"></i>
-                                    ) : suggestion.type === 'category' ? (
-                                        <i className="bi bi-tag text-success"></i>
-                                    ) : (
-                                        <i className="bi bi-fire text-danger"></i>
-                                    )}
-                                </div>
-                                <div className="flex-grow-1">
-                                    <div className="fw-semibold">{suggestion.name}</div>
-                                    <div className="text-muted small">
-                                        {suggestion.type === 'product' ? 'পণ্য' : 
-                                         suggestion.type === 'category' ? 'ক্যাটাগরি' : 
-                                         'জনপ্রিয় সার্চ'}
-                                    </div>
-                                </div>
-                                <div>
-                                    <i className="bi bi-chevron-right text-muted"></i>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                    
-                    <div className="p-2 border-top bg-light">
-                        <button 
-                            className="btn btn-sm btn-outline-primary w-100"
-                            onClick={() => handleQuickSearch(searchTerm)}
-                        >
-                            <i className="bi bi-search me-1"></i>
-                            "{searchTerm}" সার্চ করুন
-                        </button>
-                    </div>
-                </div>
-            )}
-            
-            {/* CSS স্টাইল */}
-            <style jsx>{`
-                .search-container {
-                    position: relative;
-                    max-width: 600px;
-                    margin: 0 auto;
-                }
+        <>
+            {/* গ্লোবাল স্টাইল ইনজেক্ট - বাংলা ফন্টের জন্য */}
+            <style jsx global>{`
+                @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Noto+Sans+Bengali:wght@300;400;500;600;700&display=swap');
                 
-                .hover-bg:hover {
-                    background-color: #f8f9fa;
-                }
-                
+                /* সার্চ বার এবং সমস্ত বাংলা টেক্সটের জন্য ফন্ট */
+                .search-container input,
+                .search-container button,
+                .search-container .alert,
                 .suggestions-dropdown {
-                    animation: fadeIn 0.2s ease;
+                    font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Segoe UI', sans-serif !important;
                 }
                 
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(-10px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                
-                .suggestion-item:hover {
-                    background-color: #f8f9fa !important;
+                /* Placeholder বাংলা টেক্সটের জন্য */
+                input::placeholder {
+                    font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif !important;
+                    color: #6c757d !important;
+                    font-weight: 400 !important;
                 }
             `}</style>
-        </div>
+            
+            <div className="search-container" ref={searchRef}>
+                <form onSubmit={handleSearch} className="d-flex">
+                    <div className="input-group">
+                        <input
+                            type="text"
+                            className="form-control"
+                            placeholder="পণ্য খুঁজুন (যেমন: খেজুর, মধু, আখরোট, বাদাম...)"
+                            value={searchTerm}
+                            onChange={(e) => { 
+                                setSearchTerm(e.target.value);
+                                setError(null);
+                            }}
+                            onFocus={() => setShowSuggestions(true)}
+                            aria-label="Search products"
+                            style={{
+                                borderRight: 'none',
+                                borderRadius: '20px 0 0 20px',
+                                paddingLeft: '20px',
+                                fontFamily: "'Hind Siliguri', 'Noto Sans Bengali', sans-serif",
+                                fontSize: '16px'
+                            }}
+                        />
+                        
+                        <button 
+                            className="btn btn-primary" 
+                            type="submit"
+                            disabled={loading || !searchTerm.trim()}
+                            style={{
+                                borderRadius: '0 20px 20px 0',
+                                padding: '0 20px',
+                                fontFamily: "'Hind Siliguri', 'Noto Sans Bengali', sans-serif"
+                            }}
+                        >
+                            {loading ? (
+                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            ) : (
+                                <i className="bi bi-search"></i>
+                            )}
+                        </button>
+                    </div>
+                </form>
+                
+                {/* Error Message */}
+                {error && (
+                    <div className="alert alert-warning alert-dismissible fade show mt-2" role="alert" style={{ 
+                        fontSize: '0.9rem',
+                        fontFamily: "'Hind Siliguri', 'Noto Sans Bengali', sans-serif"
+                    }}>
+                        <i className="bi bi-exclamation-triangle me-2"></i>
+                        {error}
+                        <button type="button" className="btn-close" onClick={() => setError(null)}></button>
+                    </div>
+                )}
+                
+                {/* অটোকমপ্লিট সুজেশন ড্রপডাউন */}
+                {showSuggestions && suggestions.length > 0 && (
+                    <div className="suggestions-dropdown shadow-lg border rounded bg-white mt-1 position-absolute"
+                         style={{
+                             width: '100%',
+                             maxHeight: '400px',
+                             overflowY: 'auto',
+                             zIndex: 1050,
+                             fontFamily: "'Hind Siliguri', 'Noto Sans Bengali', sans-serif"
+                         }}>
+                        <div className="suggestion-header p-2 border-bottom bg-light">
+                            <small className="text-muted">
+                                <i className="bi bi-lightbulb me-1"></i>
+                                সার্চ সুজেশন ({suggestions.length})
+                            </small>
+                        </div>
+                        
+                        {suggestions.map((suggestion, index) => (
+                            <div
+                                key={`${suggestion.type}-${index}`}
+                                className="suggestion-item p-3 border-bottom hover-bg"
+                                onClick={() => handleSuggestionClick(suggestion)}
+                                style={{
+                                    cursor: 'pointer',
+                                    transition: 'background-color 0.2s'
+                                }}
+                            >
+                                <div className="d-flex align-items-center">
+                                    <div className="suggestion-icon me-3">
+                                        {suggestion.type === 'product' ? (
+                                            <i className="bi bi-box text-primary"></i>
+                                        ) : suggestion.type === 'category' ? (
+                                            <i className="bi bi-tag text-success"></i>
+                                        ) : (
+                                            <i className="bi bi-fire text-danger"></i>
+                                        )}
+                                    </div>
+                                    <div className="flex-grow-1">
+                                        <div className="fw-semibold">{suggestion.name}</div>
+                                        <div className="text-muted small">
+                                            {suggestion.type === 'product' ? 'পণ্য' : 
+                                             suggestion.type === 'category' ? 'ক্যাটাগরি' : 
+                                             'জনপ্রিয় সার্চ'}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <i className="bi bi-chevron-right text-muted"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        
+                        <div className="p-2 border-top bg-light">
+                            <button 
+                                className="btn btn-sm btn-outline-primary w-100"
+                                onClick={() => handleQuickSearch(searchTerm)}
+                                style={{ 
+                                    fontFamily: "'Hind Siliguri', 'Noto Sans Bengali', sans-serif"
+                                }}
+                            >
+                                <i className="bi bi-search me-1"></i>
+                                "{searchTerm}" সার্চ করুন
+                            </button>
+                        </div>
+                    </div>
+                )}
+                
+                {/* CSS স্টাইল */}
+                <style jsx>{`
+                    .search-container {
+                        position: relative;
+                        max-width: 600px;
+                        margin: 0 auto;
+                    }
+                    
+                    .hover-bg:hover {
+                        background-color: #f8f9fa;
+                    }
+                    
+                    .suggestions-dropdown {
+                        animation: fadeIn 0.2s ease;
+                    }
+                    
+                    @keyframes fadeIn {
+                        from { opacity: 0; transform: translateY(-10px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                    
+                    .suggestion-item:hover {
+                        background-color: #f8f9fa !important;
+                    }
+                `}</style>
+            </div>
+        </>
     );
 };
 
