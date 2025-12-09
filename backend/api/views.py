@@ -1,19 +1,25 @@
+# api/views.py
+
 from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Q
+from django.db import models
+import uuid
 
-from .models import Category, Product, Order, OrderItem
+from .models import Category, Product, Order, OrderItem, Payment
 from .serializers import (
     CategorySerializer, 
     ProductSerializer, 
     OrderSerializer, 
-    OrderItemSerializer
+    OrderItemSerializer,
+    PaymentSerializer
 )
 
-
+# ============================ Category ViewSet ============================
 class CategoryViewSet(viewsets.ModelViewSet):
     """
     API endpoint for categories
@@ -23,6 +29,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
 
 
+# ============================ Product ViewSet ============================
 class ProductViewSet(viewsets.ModelViewSet):
     """
     API endpoint for products
@@ -76,6 +83,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+# ============================ Order ViewSet ============================
 class OrderViewSet(viewsets.ModelViewSet):
     """
     API endpoint for orders
@@ -118,6 +126,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.save()
 
 
+# ============================ OrderItem ViewSet ============================
 class OrderItemViewSet(viewsets.ModelViewSet):
     """
     API endpoint for order items
@@ -126,46 +135,7 @@ class OrderItemViewSet(viewsets.ModelViewSet):
     serializer_class = OrderItemSerializer
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
-from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
-
-from .models import Category, Product, Order, OrderItem, Payment  # Payment যোগ করুন
-from .serializers import (
-    CategorySerializer, 
-    ProductSerializer, 
-    OrderSerializer, 
-    OrderItemSerializer,
-    PaymentSerializer  # PaymentSerializer যোগ করুন
-)
-
-import uuid  # transaction ID এর জন্য
-
-# ... আপনার আগের CategoryViewSet, ProductViewSet, OrderViewSet, OrderItemViewSet ...
-
-# ✅ PaymentViewSet যোগ করুন (views.py-এর শেষে)
+# ============================ Payment ViewSet ============================
 class PaymentViewSet(viewsets.ModelViewSet):
     """
     API endpoint for payments
@@ -190,18 +160,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         # payment.payment_method অনুযায়ী আলাদা API কল হবে
 
 
-
-
-
-
-
-
-# api/views.py এর শেষে এই ভিউগুলো যোগ করুন
-
-from django.db.models import Q
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-
+# ============================ SEARCH VIEWS ============================
 @api_view(['GET'])
 def search_products(request):
     """

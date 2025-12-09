@@ -14,7 +14,7 @@ router.register(r'payments', views.PaymentViewSet)
 urlpatterns = [
     path('', include(router.urls)),
     
-    # ✅ নতুন সার্চ এন্ডপয়েন্টস যোগ করুন
+    # ✅ সার্চ এন্ডপয়েন্টস
     path('search/', views.search_products, name='search-products'),
     path('search/autocomplete/', views.autocomplete_suggestions, name='autocomplete'),
     path('search/statistics/', views.search_statistics, name='search-stats'),
