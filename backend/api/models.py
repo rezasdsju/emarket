@@ -196,9 +196,12 @@ class Product(models.Model):
         verbose_name = "Product"
         verbose_name_plural = "Products"
         indexes = [
-            GinIndex(fields=['search_vector']),  # ফাস্ট সার্চের জন্য
-            models.Index(fields=['name', 'category']),
-            models.Index(fields=['available', 'price']),
+            models.Index(fields=['search_vector']),  # GinIndex ব্যবহার না করে
+            models.Index(fields=['name']),
+            models.Index(fields=['category']),
+            models.Index(fields=['available']),
+            models.Index(fields=['price']),
+            models.Index(fields=['created']), 
         ]
     
     def save(self, *args, **kwargs):
