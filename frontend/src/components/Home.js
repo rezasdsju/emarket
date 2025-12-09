@@ -13,6 +13,15 @@ const Home = () => {
     const [currentProductIndex, setCurrentProductIndex] = useState(0);
     
     const API_BASE_URL = 'https://organic.satbeta.top';
+    const WHATSAPP_NUMBER = '01722292603';
+    
+    // WhatsApp মেসেজ ফাংশন
+    const sendWhatsAppMessage = () => {
+        const message = "Hello! I'm interested in your organic products. Can you help me?";
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+        window.open(whatsappUrl, '_blank');
+    };
     
     // ✅ ইমেজ URL তৈরি করার ফাংশন - FIXED VERSION
     const getImageUrl = (imageField) => {
@@ -287,6 +296,65 @@ const Home = () => {
     
     return (
         <div className="home-page" style={{ paddingTop: '80px' }}>
+            {/* WhatsApp Floating Button */}
+            <div 
+                className="whatsapp-float"
+                onClick={sendWhatsAppMessage}
+                style={{
+                    position: 'fixed',
+                    bottom: '30px',
+                    right: '30px',
+                    width: '60px',
+                    height: '60px',
+                    backgroundColor: '#25D366',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                    cursor: 'pointer',
+                    zIndex: 1000,
+                    transition: 'all 0.3s ease',
+                    animation: 'pulse 2s infinite'
+                }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.1)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
+                }}
+                title="WhatsApp এ আমাদের সাথে যোগাযোগ করুন"
+            >
+                <i 
+                    className="bi bi-whatsapp" 
+                    style={{
+                        fontSize: '30px',
+                        color: 'white'
+                    }}
+                ></i>
+                
+                {/* Notification Badge */}
+                <div 
+                    className="whatsapp-notification"
+                    style={{
+                        position: 'absolute',
+                        top: '0px',
+                        right: '0px',
+                        backgroundColor: '#FF4081',
+                        color: 'white',
+                        fontSize: '10px',
+                        padding: '2px 6px',
+                        borderRadius: '10px',
+                        fontWeight: 'bold',
+                        animation: 'bounce 1s infinite'
+                    }}
+                >
+                    Chat
+                </div>
+            </div>
+            
             {/* হিরো সেকশন - Admin পণ্য Slider */}
             <div className="hero-section bg-primary text-white py-5">
                 <div className="container">
@@ -678,6 +746,47 @@ const Home = () => {
                 
                 .nav-tabs .nav-link.active {
                     font-weight: 600;
+                }
+                
+                /* WhatsApp Button Animation */
+                @keyframes pulse {
+                    0% {
+                        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+                    }
+                    70% {
+                        box-shadow: 0 0 0 15px rgba(37, 211, 102, 0);
+                    }
+                    100% {
+                        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+                    }
+                }
+                
+                @keyframes bounce {
+                    0%, 100% {
+                        transform: translateY(0);
+                    }
+                    50% {
+                        transform: translateY(-5px);
+                    }
+                }
+                
+                /* Responsive WhatsApp Button */
+                @media (max-width: 768px) {
+                    .whatsapp-float {
+                        bottom: 20px;
+                        right: 20px;
+                        width: 50px;
+                        height: 50px;
+                    }
+                    
+                    .whatsapp-float i {
+                        font-size: 25px;
+                    }
+                    
+                    .whatsapp-notification {
+                        font-size: 8px;
+                        padding: 1px 4px;
+                    }
                 }
             `}</style>
         </div>

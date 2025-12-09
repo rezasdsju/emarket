@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
@@ -7,14 +7,10 @@
     <!-- ✅ Viewport meta tag (must have) -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     
-    <!-- ✅ UTF-8 and language declaration -->
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="language" content="Bengali" />
-    
-    <meta name="theme-color" content="#28a745" />
+    <meta name="theme-color" content="#000000" />
     <meta
       name="description"
-      content="অর্গানিক বাজার - প্রকৃতির সেরা উপহার, ১০০% অর্গানিক পণ্য"
+      content="অর্গানিক বাজার - প্রকৃতির সেরা উপহার"
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     
@@ -32,52 +28,13 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
     >
     
-    <!-- ✅ Bengali Fonts - Hind Siliguri and Noto Sans Bengali -->
-    <link 
-        href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Noto+Sans+Bengali:wght@300;400;500;600;700&display=swap" 
-        rel="stylesheet"
-    >
-    
     <!-- ✅ Manifest -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     
     <title>অর্গানিক বাজার - ১০০% অর্গানিক পণ্য</title>
     
-    <!-- ✅ Custom CSS for Bengali Font and Mobile Fix -->
+    <!-- ✅ Custom CSS for mobile fix -->
     <style>
-        /* Global Bengali Font Styles */
-        * {
-            font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Segoe UI', sans-serif !important;
-        }
-        
-        body {
-            font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Segoe UI', sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            direction: ltr;
-            text-align: left;
-        }
-        
-        /* Fix for Bengali Placeholder */
-        input::placeholder,
-        textarea::placeholder {
-            font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif !important;
-            color: #6c757d !important;
-            font-weight: 400 !important;
-            opacity: 1 !important;
-        }
-        
-        /* Fix for Bengali text in buttons and form elements */
-        button,
-        input,
-        select,
-        textarea,
-        .btn,
-        .form-control,
-        .form-label {
-            font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif !important;
-        }
-        
         /* Fix for mobile navbar */
         @media (max-width: 991.98px) {
             .navbar-collapse {
@@ -90,13 +47,12 @@
                 color: #333 !important;
                 border-bottom: 1px solid #eee;
                 padding: 0.75rem 0;
-                font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif !important;
             }
             .navbar-dark .navbar-collapse .nav-link:last-child {
                 border-bottom: none;
             }
             .navbar-dark .navbar-collapse .nav-link:hover {
-                color: #28a745 !important;
+                color: #0d6efd !important;
             }
         }
         
@@ -104,50 +60,10 @@
         .navbar-toggler:focus {
             box-shadow: none !important;
         }
-        
-        /* Bengali text alignment */
-        .bengali-text {
-            font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
-            line-height: 1.6;
-        }
-        
-        /* Improve Bengali readability */
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
-            font-weight: 600;
-        }
-        
-        p, span, div {
-            font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
-        }
-        
-        /* Custom scrollbar for better Bengali reading */
-        ::-webkit-scrollbar {
-            width: 10px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #28a745;
-            border-radius: 5px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #218838;
-        }
     </style>
   </head>
   <body>
-    <noscript>
-      <div class="alert alert-danger m-3">
-        <h4>JavaScript প্রয়োজন</h4>
-        <p>এই ওয়েবসাইটটি চালানোর জন্য JavaScript সক্রিয় করতে হবে।</p>
-        <p>দয়া করে আপনার ব্রাউজারে JavaScript সক্রিয় করুন এবং পৃষ্ঠাটি রিফ্রেশ করুন।</p>
-      </div>
-    </noscript>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     
     <!-- ✅ Bootstrap JS Bundle with Popper (MUST ADD AT BOTTOM) -->
@@ -157,44 +73,28 @@
         crossorigin="anonymous"
     ></script>
     
-    <!-- ✅ Debug script for Bengali font and navbar -->
+    <!-- ✅ Debug script for navbar -->
     <script>
-        // Debug on page load
+        // Debug navbar on page load
         window.addEventListener('DOMContentLoaded', function() {
-            console.log('🔄 DOM Loaded - Checking Bengali Font and Navbar...');
+            console.log('🔄 DOM Loaded - Checking Navbar...');
             
-            // Check Bengali font loading
-            const testDiv = document.createElement('div');
-            testDiv.style.fontFamily = "'Hind Siliguri', sans-serif";
-            testDiv.style.position = 'absolute';
-            testDiv.style.opacity = '0';
-            testDiv.innerHTML = 'বাংলা টেস্ট';
-            document.body.appendChild(testDiv);
-            
-            setTimeout(() => {
-                const width = testDiv.offsetWidth;
-                console.log('বাংলা ফন্ট টেস্ট:', testDiv.innerHTML, 'Width:', width);
-                document.body.removeChild(testDiv);
-                
-                if (width > 50) {
-                    console.log('✅ বাংলা ফন্ট সঠিকভাবে লোড হয়েছে');
-                } else {
-                    console.warn('⚠️ বাংলা ফন্ট লোড হতে সমস্যা হচ্ছে');
-                }
-            }, 100);
-            
-            // Check navbar
             const navbarToggler = document.querySelector('.navbar-toggler');
             const navbarCollapse = document.querySelector('.navbar-collapse');
             
             if (navbarToggler) {
                 console.log('✅ Navbar toggler found');
+                console.log('Toggler attributes:', {
+                    'data-bs-toggle': navbarToggler.getAttribute('data-bs-toggle'),
+                    'data-bs-target': navbarToggler.getAttribute('data-bs-target')
+                });
             } else {
                 console.error('❌ Navbar toggler not found');
             }
             
             if (navbarCollapse) {
                 console.log('✅ Navbar collapse element found');
+                console.log('Collapse ID:', navbarCollapse.id);
             }
             
             // Check Bootstrap
@@ -202,47 +102,6 @@
                 console.error('❌ Bootstrap JS not loaded properly');
             } else {
                 console.log('✅ Bootstrap JS loaded');
-            }
-            
-            // Check UTF-8 encoding
-            console.log('UTF-8 টেস্ট:', 'খেজুর, মধু, আখরোট, বাদাম');
-            
-            // Force UTF-8 for all XHR requests
-            if (window.XMLHttpRequest) {
-                XMLHttpRequest.prototype.originalOpen = XMLHttpRequest.prototype.open;
-                XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
-                    this.originalOpen(method, url, async, user, password);
-                    this.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
-                };
-            }
-            
-            // Also for fetch API
-            const originalFetch = window.fetch;
-            window.fetch = function(...args) {
-                let [resource, config] = args;
-                config = config || {};
-                config.headers = config.headers || {};
-                config.headers['Content-Type'] = 'application/json; charset=utf-8';
-                return originalFetch(resource, config);
-            };
-        });
-        
-        // Check font loading after page is fully loaded
-        window.addEventListener('load', function() {
-            console.log('📖 Page fully loaded');
-            
-            // Check search input placeholder
-            const searchInput = document.querySelector('input[placeholder*="খুঁজুন"]');
-            if (searchInput) {
-                console.log('✅ সার্চ ইনপুট পাওয়া গেছে:', searchInput.placeholder);
-                console.log('ফন্ট ফ্যামিলি:', window.getComputedStyle(searchInput).fontFamily);
-                
-                // Force Bengali font if not applied
-                if (!window.getComputedStyle(searchInput).fontFamily.includes('Hind') && 
-                    !window.getComputedStyle(searchInput).fontFamily.includes('Noto')) {
-                    console.log('🔄 সার্চ ইনপুটে বাংলা ফন্ট ফোর্স করা হচ্ছে');
-                    searchInput.style.fontFamily = "'Hind Siliguri', 'Noto Sans Bengali', sans-serif";
-                }
             }
         });
     </script>
