@@ -38,6 +38,7 @@ class Product(models.Model):
     description = models.TextField(blank=True, verbose_name="Description")
     stock = models.PositiveIntegerField(default=0, verbose_name="Stock Quantity")
     available = models.BooleanField(default=True, verbose_name="Is Available?")
+    featured = models.BooleanField(default=False, verbose_name="Featured Product")  # ✅ নতুন ফিল্ড যোগ করুন
     created = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated = models.DateTimeField(auto_now=True, verbose_name="Updated At")
     
@@ -52,6 +53,7 @@ class Product(models.Model):
         indexes = [
             models.Index(fields=['name']),
             models.Index(fields=['category']),
+            models.Index(fields=['featured']),  # ✅ নতুন ইন্ডেক্স যোগ করুন
         ]
     
     def __str__(self):

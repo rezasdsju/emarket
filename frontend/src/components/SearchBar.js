@@ -7,8 +7,7 @@ const SearchBar = () => {
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [searchResults, setSearchResults] = useState(null);
-    const [showResults, setShowResults] = useState(false);
+    const [error, setError] = useState(null);
     
     const navigate = useNavigate();
     const searchRef = useRef(null);
@@ -19,7 +18,6 @@ const SearchBar = () => {
         const handleClickOutside = (event) => {
             if (searchRef.current && !searchRef.current.contains(event.target)) {
                 setShowSuggestions(false);
-                setShowResults(false);
             }
         };
         
@@ -41,19 +39,26 @@ const SearchBar = () => {
             const response = await axios.get(
                 `${API_BASE_URL}/api/search/autocomplete/?q=${encodeURIComponent(searchTerm)}`,
                 {
-                    headers: { 'Accept': 'application/json' }
+                    headers: { 'Accept': 'application/json' },
+                    timeout: 5000  // ✅ Timeout যোগ করুন
                 }
             );
             setSuggestions(response.data.suggestions || []);
+            setError(null);
         } catch (error) {
             console.error('Suggestion fetch error:', error);
+            setSuggestions([]);
         }
     };
     
     const handleSearch = async (e) => {
         e.preventDefault();
+        setError(null);
         
-        if (!searchTerm.trim()) return;
+        if (!searchTerm.trim()) {
+            setError('সার্চ ক্যোয়ারী প্রয়োজন');
+            return;
+        }
         
         setLoading(true);
         setShowSuggestions(false);
@@ -62,12 +67,10 @@ const SearchBar = () => {
             const response = await axios.get(
                 `${API_BASE_URL}/api/search/?q=${encodeURIComponent(searchTerm)}`,
                 {
-                    headers: { 'Accept': 'application/json' }
+                    headers: { 'Accept': 'application/json' },
+                    timeout: 10000  // ✅ Timeout যোগ করুন
                 }
             );
-            
-            setSearchResults(response.data);
-            setShowResults(true);
             
             // সার্চ পেজে নেভিগেট
             navigate(`/search?q=${encodeURIComponent(searchTerm)}`, {
@@ -76,7 +79,27 @@ const SearchBar = () => {
             
         } catch (error) {
             console.error('Search error:', error);
-            alert('সার্চ করতে সমস্যা হয়েছে।');
+            
+            // ✅ User-friendly error messages
+            if (error.code === 'ECONNABORTED') {
+                setError('সার্চ রিকোয়েস্ট টাইমআউট হয়েছে। আবার চেষ্টা করুন।');
+            } else if (error.response) {
+                // Server responded with error
+                if (error.response.status === 400) {
+                    setError('সার্চ ক্যোয়ারী ভুল ফর্ম্যাট।');
+                } else if (error.response.status === 500) {
+                    setError('সার্ভারে সমস্যা হয়েছে। দয়া করে পরে চেষ্টা করুন।');
+                } else {
+                    setError(`সার্চ করতে সমস্যা হয়েছে: ${error.response.status}`);
+                }
+            } else if (error.request) {
+                setError('সার্ভারে সংযোগ করতে সমস্যা হচ্ছে। ইন্টারনেট সংযোগ চেক করুন।');
+            } else {
+                setError('সার্চ করতে সমস্যা হয়েছে।');
+            }
+            
+            // Fallback: সরাসরি search page এ যান
+            navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
         } finally {
             setLoading(false);
         }
@@ -85,6 +108,7 @@ const SearchBar = () => {
     const handleSuggestionClick = (suggestion) => {
         setSearchTerm(suggestion.name);
         setShowSuggestions(false);
+        setError(null);
         
         if (suggestion.type === 'product') {
             navigate(`/product/${suggestion.id}`);
@@ -109,7 +133,10 @@ const SearchBar = () => {
                         className="form-control"
                         placeholder="পণ্য খুঁজুন (যেমন: চাল, ডাল, তেল, মধু...)"
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setError(null);
+                        }}
                         onFocus={() => setShowSuggestions(true)}
                         aria-label="Search products"
                         style={{
@@ -136,6 +163,15 @@ const SearchBar = () => {
                     </button>
                 </div>
             </form>
+            
+            {/* Error Message */}
+            {error && (
+                <div className="alert alert-warning alert-dismissible fade show mt-2" role="alert" style={{ fontSize: '0.9rem' }}>
+                    <i className="bi bi-exclamation-triangle me-2"></i>
+                    {error}
+                    <button type="button" className="btn-close" onClick={() => setError(null)}></button>
+                </div>
+            )}
             
             {/* অটোকমপ্লিট সুজেশন ড্রপডাউন */}
             {showSuggestions && suggestions.length > 0 && (

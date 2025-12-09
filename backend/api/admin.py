@@ -1,5 +1,13 @@
 from django.contrib import admin
-from .models import Category, Product, Order, OrderItem
+from .models import Category, Product, Order, OrderItem, Payment
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ('transaction_id', 'order', 'amount', 'payment_method', 'status', 'created')
+    list_filter = ('status', 'payment_method', 'created')
+    search_fields = ('transaction_id', 'order__name', 'mobile_number')
+    date_hierarchy = 'created'
+    ordering = ('-created',)
 
 
 @admin.register(Category)
@@ -17,9 +25,9 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'price', 'stock', 'available', 'created')
-    list_filter = ('available', 'created', 'category')
-    list_editable = ('price', 'stock', 'available')
+    list_display = ('name', 'category', 'price', 'stock', 'available', 'featured', 'created')  # ✅ featured যোগ করুন
+    list_filter = ('available', 'featured', 'created', 'category')  # ✅ featured যোগ করুন
+    list_editable = ('price', 'stock', 'available', 'featured')  # ✅ featured যোগ করুন
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name', 'description')
     raw_id_fields = ('category',)
@@ -35,40 +43,3 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemInline]
     date_hierarchy = 'created'
     ordering = ('-created',)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-from django.contrib import admin
-from .models import Category, Product, Order, OrderItem, Payment  # Payment যোগ করুন
-
-@admin.register(Payment)  # ✅ এই ডেকোরেটর যোগ করুন
-class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('transaction_id', 'order', 'amount', 'payment_method', 'status', 'created')
-    list_filter = ('status', 'payment_method', 'created')
-    search_fields = ('transaction_id', 'order__name', 'mobile_number')
-    date_hierarchy = 'created'
-    ordering = ('-created',)
-
-# ... আপনার আগের CategoryAdmin, ProductAdmin, OrderAdmin ...

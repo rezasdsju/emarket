@@ -37,7 +37,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.filter(available=True)
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['category', 'available']
+    filterset_fields = ['category', 'available', 'featured']  # ✅ featured যোগ করুন
     search_fields = ['name', 'description']
     ordering_fields = ['price', 'created', 'name']
     ordering = ['-created']
@@ -76,9 +76,9 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def featured(self, request):
         """
-        Get featured products (newest 8 products)
+        Get featured products
         """
-        featured_products = Product.objects.filter(available=True).order_by('-created')[:8]
+        featured_products = Product.objects.filter(available=True, featured=True).order_by('-created')[:8]
         serializer = self.get_serializer(featured_products, many=True)
         return Response(serializer.data)
 
@@ -225,7 +225,7 @@ def search_products(request):
     
     products = products_qs.filter(q_objects).distinct()
     
-    # রিলেভেন্স স্কোরিং (আপনার প্রয়োজন অনুযায়ী এডিট করুন)
+    # ✅ রিলেভেন্স স্কোরিং ফাংশন - fixed
     def calculate_relevance(product, query):
         score = 0
         
@@ -248,19 +248,28 @@ def search_products(request):
             if term.lower() in (product.category.name or '').lower():
                 score += 30
         
-        # জনপ্রিয় পণ্যের বোনাস
-        if product.featured:
+        # জনপ্রিয় পণ্যের বোনাস - ✅ hasattr চেক যোগ করুন
+        if hasattr(product, 'featured') and product.featured:
             score += 10
+        
+        # স্টক থাকলে বোনাস
+        if product.stock > 0:
+            score += 5
         
         return score
     
     # প্রোডাক্ট লিস্ট তৈরি
     product_list = []
     for product in products:
-        serializer = ProductSerializer(product, context={'request': request})
-        product_data = serializer.data
-        product_data['relevance_score'] = calculate_relevance(product, query)
-        product_list.append(product_data)
+        try:
+            serializer = ProductSerializer(product, context={'request': request})
+            product_data = serializer.data
+            product_data['relevance_score'] = calculate_relevance(product, query)
+            product_list.append(product_data)
+        except Exception as e:
+            # লগ করুন কিন্তু প্রোগ্রাম ক্রাশ করবেন না
+            print(f"Error serializing product {product.id}: {e}")
+            continue
     
     # রিলেভেন্স অনুসারে সর্টিং
     product_list.sort(key=lambda x: x['relevance_score'], reverse=True)
