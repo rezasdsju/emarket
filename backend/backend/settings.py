@@ -25,8 +25,7 @@ ALLOWED_HOSTS = [
     '161.248.189.70',
     'localhost',
     '127.0.0.1',
-    # যদি অন্য subdomain থাকে
-    # 'www.organic.satbeta.top',
+    '*',  # সব হোস্টের জন্য (প্রোডাকশনে সরিয়ে দিন)
 ]
 
 # ========== APPLICATION DEFINITION ==========
@@ -218,13 +217,17 @@ REST_FRAMEWORK = {
     'SEARCH_PARAM': 'q',
 }
 
-# ========== LOGGING CONFIGURATION ==========
+# ========== LOGGING CONFIGURATION (সঠিক ও মেয়াদি) ==========
+# লগ ডিরেক্টরি তৈরি
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
         'simple': {
@@ -233,51 +236,63 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/django_error.log'),
-            'formatter': 'verbose',
-        },
         'console': {
-            'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
-        'search_log': {  # ✅ নতুন: সার্চ লগের জন্য
+        'django_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'django_error.log'),
+            'maxBytes': 5 * 1024 * 1024,  # 5 MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        'app_file': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/search.log'),
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'app.log'),
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 10,
+            'formatter': 'verbose',
+        },
+        'search_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'search.log'),
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 5,
             'formatter': 'simple',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['file', 'console'],
-            'level': 'ERROR',
+            'handlers': ['console', 'django_file'],
+            'level': 'ERROR' if not DEBUG else 'INFO',
             'propagate': True,
         },
         'api': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console', 'app_file'],
             'level': 'INFO',
             'propagate': False,
         },
-        'api.search': {  # ✅ নতুন: সার্চ লগার
-            'handlers': ['search_log', 'console'],
+        'api.search': {
+            'handlers': ['console', 'search_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'gunicorn.error': {
+            'handlers': ['console', 'django_file'],
             'level': 'INFO',
             'propagate': False,
         },
     },
+    # Root logger configuration
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
 }
-
-# ========== EMAIL CONFIGURATION (যদি দরকার হয়) ==========
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-# DEFAULT_FROM_EMAIL = 'noreply@organic.satbeta.top'
 
 # ========== POSTGRESQL FULL-TEXT SEARCH SETTINGS ==========
 # ✅ Full-text search কনফিগারেশন
@@ -301,6 +316,14 @@ SEARCH_SETTINGS = {
     'USE_POSTGRES_SEARCH': True,  # PostgreSQL Full-Text Search ব্যবহার
 }
 
-# ✅ সার্চ লগ ডিরেক্টরি তৈরি
-SEARCH_LOG_DIR = os.path.join(BASE_DIR, 'logs')
-os.makedirs(SEARCH_LOG_DIR, exist_ok=True)
+# ========== GUNICORN SETTINGS ==========
+# Gunicorn configuration (systemd service এর জন্য)
+GUNICORN_CONFIG = {
+    'workers': 3,
+    'bind': '127.0.0.1:8001',
+    'timeout': 120,
+    'keepalive': 5,
+    'worker_class': 'sync',
+    'max_requests': 1000,
+    'max_requests_jitter': 50,
+}
