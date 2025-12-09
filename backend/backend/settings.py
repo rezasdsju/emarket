@@ -157,7 +157,9 @@ if not DEBUG:
 
 # ========== CORS SETTINGS ==========
 # Production CORS settings
-CORS_ALLOW_ALL_ORIGINS = False  # Production এ False রাখুন
+#CORS_ALLOW_ALL_ORIGINS = False  # Production এ False রাখুন
+CORS_ALLOW_ALL_ORIGINS = True  # সব origin থেকে অনুমতি দিন
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://organic.satbeta.top",
     "https://organic.satbeta.top",
