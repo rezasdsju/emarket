@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ProductCard from './ProductCard';
@@ -7,31 +7,43 @@ const SearchResults = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [searchData, setSearchData] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showSortDropdown, setShowSortDropdown] = useState(false);
+    const sortDropdownRef = useRef(null);
     
-    // ✅ URL থেকে প্যারামিটার পড়ুন
+    // URL থেকে প্যারামিটার পড়ুন
     const queryParams = new URLSearchParams(location.search);
     const query = queryParams.get('q') || '';
     const page = queryParams.get('page') || 1;
     const sortByFromUrl = queryParams.get('sort_by') || 'relevance';
+    const categoryFromUrl = queryParams.get('category') || '';
+    const minPriceFromUrl = queryParams.get('min_price') || '';
+    const maxPriceFromUrl = queryParams.get('max_price') || '';
     
-    // ✅ ফিল্টার স্টেট URL থেকে ইনিশিয়ালাইজ করুন
+    // ফিল্টার স্টেট URL থেকে ইনিশিয়ালাইজ করুন
     const [filters, setFilters] = useState({
-        category: '',
-        min_price: '',
-        max_price: '',
+        category: categoryFromUrl,
+        min_price: minPriceFromUrl,
+        max_price: maxPriceFromUrl,
         sort_by: sortByFromUrl
     });
     
-    // ✅ সর্ট ড্রপডাউনের জন্য স্টেট
-    const [showSortDropdown, setShowSortDropdown] = useState(false);
-    const sortDropdownRef = useRef(null);
-    
     const API_BASE_URL = 'https://organic.satbeta.top';
     
-    // ✅ সার্চ ফাংশন - useCallback দিয়ে মেমোইজ করুন
-    const performSearch = useCallback(async () => {
+    // সর্ট লেবেল ফাংশন
+    const getSortLabel = (sortValue) => {
+        switch(sortValue) {
+            case 'relevance': return 'রিলেভেন্স';
+            case 'price_asc': return 'দাম: কম থেকে বেশি';
+            case 'price_desc': return 'দাম: বেশি থেকে কম';
+            case 'newest': return 'নতুন আগে';
+            default: return 'রিলেভেন্স';
+        }
+    };
+    
+    // সার্চ ফাংশন
+    const performSearch = async (sortParam = null) => {
         if (!query || query.trim() === '') {
             navigate('/');
             return;
@@ -41,14 +53,17 @@ const SearchResults = () => {
         setError(null);
         
         try {
-            // ✅ URL তৈরি করুন সব প্যারামিটার সহ
+            // URL তৈরি করুন সব প্যারামিটার সহ
             const params = new URLSearchParams();
             params.append('q', query);
             params.append('page', page);
             
-            if (filters.sort_by && filters.sort_by !== 'relevance') {
-                params.append('sort_by', filters.sort_by);
+            // সর্ট প্যারামিটার (প্রথমে আর্গুমেন্ট চেক, তারপর স্টেট)
+            const sortToUse = sortParam || filters.sort_by;
+            if (sortToUse && sortToUse !== 'relevance') {
+                params.append('sort_by', sortToUse);
             }
+            
             if (filters.category) params.append('category', filters.category);
             if (filters.min_price) params.append('min_price', filters.min_price);
             if (filters.max_price) params.append('max_price', filters.max_price);
@@ -64,13 +79,13 @@ const SearchResults = () => {
             
             if (response.data.success) {
                 setSearchData(response.data);
-                console.log('✅ Search successful. Sort by:', response.data.sort_by);
+                console.log('✅ Search successful. Products:', response.data.products?.length);
                 
-                // ✅ ডিবাগ: পণ্যের দাম দেখুন
+                // ডিবাগ: সর্টিং যাচাই করুন
                 if (response.data.products && response.data.products.length > 0) {
-                    console.log('💰 Product prices (first 5):');
-                    response.data.products.slice(0, 5).forEach((p, i) => {
-                        console.log(`${i+1}. ${p.name}: ৳${p.price}`);
+                    console.log('💰 First 3 product prices:');
+                    response.data.products.slice(0, 3).forEach((p, i) => {
+                        console.log(`${i+1}. ${p.name}: ৳${p.price} (Sort: ${sortToUse})`);
                     });
                 }
             } else {
@@ -80,93 +95,59 @@ const SearchResults = () => {
         } catch (err) {
             console.error('❌ Search error:', err);
             setError('সার্চ করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।');
-            
-            // ✅ Fallback: স্থানীয়ভাবে সর্ট করুন
-            if (searchData && searchData.products) {
-                console.log('🔄 Applying local sorting...');
-                const sortedProducts = sortProductsLocally(searchData.products, filters.sort_by);
-                setSearchData(prev => ({
-                    ...prev,
-                    products: sortedProducts,
-                    sort_by: filters.sort_by
-                }));
-            }
         } finally {
             setLoading(false);
         }
-    }, [query, page, filters, navigate, searchData]);
-    
-    // ✅ স্থানীয় সর্টিং ফাংশন
-    const sortProductsLocally = (products, sortType) => {
-        const sorted = [...products];
-        
-        switch(sortType) {
-            case 'price_asc':
-                return sorted.sort((a, b) => {
-                    const priceA = parseFloat(a.price) || 0;
-                    const priceB = parseFloat(b.price) || 0;
-                    return priceA - priceB;
-                });
-                
-            case 'price_desc':
-                return sorted.sort((a, b) => {
-                    const priceA = parseFloat(a.price) || 0;
-                    const priceB = parseFloat(b.price) || 0;
-                    return priceB - priceA;
-                });
-                
-            case 'newest':
-                return sorted.sort((a, b) => {
-                    const dateA = new Date(a.created || a.created_at || 0);
-                    const dateB = new Date(b.created || b.created_at || 0);
-                    return dateB - dateA;
-                });
-                
-            default:
-                return sorted;
-        }
     };
     
-    // ✅ useEffect: প্রাথমিক লোডিং
+    // প্রাথমিক লোডিং
     useEffect(() => {
-        // URL থেকে sort_by পড়ুন
-        const urlSortBy = queryParams.get('sort_by') || 'relevance';
-        
-        // স্টেট আপডেট করুন যদি URL থেকে ভিন্ন হয়
-        if (filters.sort_by !== urlSortBy) {
-            setFilters(prev => ({
-                ...prev,
-                sort_by: urlSortBy
-            }));
-        }
-        
-        // সার্চ করুন
         if (query) {
             performSearch();
         }
-    }, [query, page, location.search]); // ✅ location.search যোগ করুন
+    }, [query, page]);
     
-    // ✅ useEffect: সর্ট পরিবর্তন হলে URL আপডেট
+    // সর্ট পরিবর্তন হলে নতুন সার্চ করুন
     useEffect(() => {
-        // URL আপডেট করুন
+        // URL থেকে প্যারামিটার আপডেট
         const params = new URLSearchParams(location.search);
         
+        // সর্ট প্যারামিটার আপডেট
         if (filters.sort_by && filters.sort_by !== 'relevance') {
             params.set('sort_by', filters.sort_by);
         } else {
             params.delete('sort_by');
         }
         
-        // নতুন URL তৈরি করুন
+        // ফিল্টার প্যারামিটার আপডেট
+        if (filters.category) {
+            params.set('category', filters.category);
+        } else {
+            params.delete('category');
+        }
+        
+        if (filters.min_price) {
+            params.set('min_price', filters.min_price);
+        } else {
+            params.delete('min_price');
+        }
+        
+        if (filters.max_price) {
+            params.set('max_price', filters.max_price);
+        } else {
+            params.delete('max_price');
+        }
+        
+        // নতুন URL তৈরি
         const newUrl = `?${params.toString()}`;
         
-        // যদি বর্তমান URL থেকে ভিন্ন হয়, তাহলে নেভিগেট করুন
+        // যদি URL পরিবর্তন হয়ে থাকে, তাহলে সার্চ করুন
         if (newUrl !== `?${location.search}`) {
-            navigate(newUrl, { replace: true });
+            performSearch(filters.sort_by);
         }
-    }, [filters.sort_by, location.search, navigate]);
+    }, [filters.sort_by, filters.category, filters.min_price, filters.max_price]);
     
-    // ✅ ড্রপডাউন বাইরে ক্লিক করলে বন্ধ করার জন্য
+    // ড্রপডাউন বাইরে ক্লিক করলে বন্ধ করার জন্য
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target)) {
@@ -178,26 +159,31 @@ const SearchResults = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
     
-    // ✅ সর্ট নির্বাচন হ্যান্ডলার
+    // সর্ট নির্বাচন হ্যান্ডলার
     const handleSortSelect = (sortValue) => {
         console.log(`🎯 Sorting selected: ${sortValue}`);
         
-        // ১. ফিল্টার আপডেট করুন
+        // ফিল্টার আপডেট করুন
         setFilters(prev => ({
             ...prev,
             sort_by: sortValue
         }));
         
-        // ২. ড্রপডাউন বন্ধ করুন
+        // ড্রপডাউন বন্ধ করুন
         setShowSortDropdown(false);
         
-        // ৩. সরাসরি সার্চ কল করুন (useEffect এর উপর নির্ভর না করে)
-        setTimeout(() => {
-            performSearch();
-        }, 0);
+        // URL আপডেট করবে এবং useEffect ট্রিগার হবে
     };
     
-    // ✅ ফিল্টার রিসেট
+    // ফিল্টার পরিবর্তন হ্যান্ডলার
+    const handleFilterChange = (key, value) => {
+        setFilters(prev => ({
+            ...prev,
+            [key]: value
+        }));
+    };
+    
+    // ফিল্টার রিসেট
     const clearFilters = () => {
         setFilters({
             category: '',
@@ -208,23 +194,17 @@ const SearchResults = () => {
         setShowSortDropdown(false);
         
         // URL রিসেট
-        const params = new URLSearchParams(location.search);
-        params.delete('sort_by');
-        params.delete('category');
-        params.delete('min_price');
-        params.delete('max_price');
+        const params = new URLSearchParams();
+        params.set('q', query);
         navigate(`?${params.toString()}`, { replace: true });
     };
     
-    // ✅ সর্ট লেবেল ফাংশন
-    const getSortLabel = (sortValue) => {
-        switch(sortValue) {
-            case 'relevance': return 'রিলেভেন্স';
-            case 'price_asc': return 'দাম: কম থেকে বেশি';
-            case 'price_desc': return 'দাম: বেশি থেকে কম';
-            case 'newest': return 'নতুন আগে';
-            default: return 'রিলেভেন্স';
-        }
+    // পেজিনেশন হ্যান্ডলার
+    const handlePageChange = (newPage) => {
+        const params = new URLSearchParams(location.search);
+        params.set('page', newPage);
+        navigate(`?${params.toString()}`);
+        window.scrollTo(0, 0);
     };
     
     // লোডিং স্টেট
@@ -245,7 +225,7 @@ const SearchResults = () => {
                 <div className="alert alert-danger">
                     <h4>সার্চ এরর</h4>
                     <p>{error}</p>
-                    <button className="btn btn-primary" onClick={performSearch}>
+                    <button className="btn btn-primary" onClick={() => performSearch()}>
                         আবার চেষ্টা করুন
                     </button>
                 </div>
@@ -270,28 +250,29 @@ const SearchResults = () => {
         <div className="search-results-page container mt-4">
             {/* হেডার */}
             <div className="search-header mb-4">
-                <h1 className="h3 fw-bold mb-3">
-                    <i className="bi bi-search me-2"></i>
-                    সার্চ ফলাফল: "{query}"
-                </h1>
-                
                 <div className="row">
                     <div className="col-md-8">
-                        <div className="alert alert-light border d-flex justify-content-between align-items-center">
-                            <div>
-                                <span className="badge bg-primary rounded-pill me-2">
-                                    <i className="bi bi-box-seam"></i>
-                                </span>
-                                <strong>{total_results}</strong> টি পণ্য পাওয়া গেছে
-                            </div>
-                            <div className="text-muted small">
-                                পৃষ্ঠা {current_page} / {total_pages} | 
-                                সর্ট: {getSortLabel(sort_by)}
+                        <h1 className="h3 fw-bold mb-3">
+                            <i className="bi bi-search me-2"></i>
+                            সার্চ ফলাফল: "{query}"
+                        </h1>
+                        
+                        <div className="alert alert-light border">
+                            <div className="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span className="badge bg-primary rounded-pill me-2">
+                                        <i className="bi bi-box-seam"></i>
+                                    </span>
+                                    <strong>{total_results}</strong> টি পণ্য পাওয়া গেছে
+                                </div>
+                                <div className="text-muted small">
+                                    পৃষ্ঠা {current_page} / {total_pages}
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    {/* ✅ সর্ট ড্রপডাউন */}
+                    {/* সর্ট ড্রপডাউন */}
                     <div className="col-md-4" ref={sortDropdownRef}>
                         <div className="position-relative">
                             <button 
@@ -319,117 +300,172 @@ const SearchResults = () => {
                                     </div>
                                     
                                     <div className="sort-options">
-                                        {['relevance', 'price_asc', 'price_desc', 'newest'].map((option) => (
+                                        {[
+                                            {value: 'relevance', label: 'রিলেভেন্স', icon: 'bi-star', desc: 'সার্চ টার্মের সাথে সবচেয়ে মিল আছে এমন'},
+                                            {value: 'price_asc', label: 'দাম: কম থেকে বেশি', icon: 'bi-sort-numeric-down', desc: 'সর্বনিম্ন দামের পণ্য আগে'},
+                                            {value: 'price_desc', label: 'দাম: বেশি থেকে কম', icon: 'bi-sort-numeric-up', desc: 'সর্বোচ্চ দামের পণ্য আগে'},
+                                            {value: 'newest', label: 'নতুন আগে', icon: 'bi-clock', desc: 'সর্বশেষ যোগকৃত পণ্য আগে'}
+                                        ].map((option) => (
                                             <button
-                                                key={option}
+                                                key={option.value}
                                                 className={`sort-option-item w-100 text-start p-3 border-bottom ${
-                                                    filters.sort_by === option ? 'bg-primary text-white' : ''
+                                                    filters.sort_by === option.value ? 'bg-primary text-white' : ''
                                                 }`}
-                                                onClick={() => handleSortSelect(option)}
+                                                onClick={() => handleSortSelect(option.value)}
                                             >
                                                 <div className="d-flex align-items-center">
-                                                    <i className={`bi ${
-                                                        option === 'relevance' ? 'bi-star' :
-                                                        option === 'price_asc' ? 'bi-sort-numeric-up' :
-                                                        option === 'price_desc' ? 'bi-sort-numeric-down' :
-                                                        'bi-clock'
-                                                    } me-3`}></i>
+                                                    <i className={`${option.icon} me-3`}></i>
                                                     <div>
-                                                        <div className="fw-semibold">{getSortLabel(option)}</div>
-                                                        <small className={filters.sort_by === option ? 'text-white' : 'text-muted'}>
-                                                            {option === 'relevance' ? 'সার্চ টার্মের সাথে সবচেয়ে মিল আছে এমন' :
-                                                             option === 'price_asc' ? 'সর্বনিম্ন দামের পণ্য আগে' :
-                                                             option === 'price_desc' ? 'সর্বোচ্চ দামের পণ্য আগে' :
-                                                             'সর্বশেষ যোগকৃত পণ্য আগে'}
+                                                        <div className="fw-semibold">{option.label}</div>
+                                                        <small className={filters.sort_by === option.value ? 'text-white' : 'text-muted'}>
+                                                            {option.desc}
                                                         </small>
                                                     </div>
                                                 </div>
                                             </button>
                                         ))}
                                     </div>
-                                    
-                                    <div className="p-2 border-top bg-light">
-                                        <button 
-                                            className="btn btn-sm btn-outline-secondary w-100"
-                                            onClick={() => setShowSortDropdown(false)}
-                                        >
-                                            <i className="bi bi-x me-1"></i>
-                                            বন্ধ করুন
-                                        </button>
-                                    </div>
                                 </div>
                             )}
+                        </div>
+                        
+                        {/* বর্তমান সর্ট স্ট্যাটাস */}
+                        <div className="mt-2 small text-center">
+                            <span className="badge bg-info">
+                                <i className="bi bi-check-circle me-1"></i>
+                                বর্তমান: {getSortLabel(sort_by || filters.sort_by)}
+                            </span>
                         </div>
                     </div>
                 </div>
             </div>
             
-            {/* মূল কন্টেন্ট */}
-            <div className="row">
-                {/* ফিল্টার সাইডবার */}
-                <div className="col-lg-3 mb-4">
+            {/* ফিল্টার সেকশন */}
+            <div className="row mb-4">
+                <div className="col-12">
                     <div className="card border-0 shadow-sm">
-                        <div className="card-header bg-light">
-                            <h5 className="mb-0">
-                                <i className="bi bi-funnel me-2"></i>
-                                ফিল্টার
-                            </h5>
-                        </div>
                         <div className="card-body">
-                            <div className="mb-3">
-                                <h6 className="border-bottom pb-2">বর্তমান সর্ট</h6>
-                                <div className="alert alert-info py-2">
-                                    <strong>{getSortLabel(filters.sort_by)}</strong>
-                                    <div className="small text-muted">
-                                        URL সর্ট: {getSortLabel(sort_by)}
-                                    </div>
+                            <div className="row g-3">
+                                <div className="col-md-4">
+                                    <label className="form-label fw-semibold">
+                                        <i className="bi bi-currency-dollar me-1"></i>
+                                        সর্বনিম্ন দাম
+                                    </label>
+                                    <input
+                                        type="number"
+                                        className="form-control"
+                                        placeholder="সর্বনিম্ন দাম"
+                                        value={filters.min_price}
+                                        onChange={(e) => handleFilterChange('min_price', e.target.value)}
+                                    />
                                 </div>
-                            </div>
-                            
-                            {/* ডিবাগ তথ্য */}
-                            <div className="mt-3 pt-3 border-top">
-                                <details className="small">
-                                    <summary className="text-muted">ডিবাগ তথ্য</summary>
-                                    <div className="mt-2">
-                                        <p className="mb-1">
-                                            <strong>Query:</strong> {query}
-                                        </p>
-                                        <p className="mb-1">
-                                            <strong>Local sort:</strong> {filters.sort_by}
-                                        </p>
-                                        <p className="mb-1">
-                                            <strong>Server sort:</strong> {sort_by}
-                                        </p>
-                                        <button 
-                                            className="btn btn-sm btn-outline-info w-100 mt-2"
-                                            onClick={performSearch}
-                                        >
-                                            API আবার কল করুন
-                                        </button>
-                                    </div>
-                                </details>
+                                
+                                <div className="col-md-4">
+                                    <label className="form-label fw-semibold">
+                                        <i className="bi bi-currency-dollar me-1"></i>
+                                        সর্বোচ্চ দাম
+                                    </label>
+                                    <input
+                                        type="number"
+                                        className="form-control"
+                                        placeholder="সর্বোচ্চ দাম"
+                                        value={filters.max_price}
+                                        onChange={(e) => handleFilterChange('max_price', e.target.value)}
+                                    />
+                                </div>
+                                
+                                <div className="col-md-4 d-flex align-items-end">
+                                    <button 
+                                        className="btn btn-outline-danger w-100"
+                                        onClick={clearFilters}
+                                        disabled={!filters.min_price && !filters.max_price && filters.sort_by === 'relevance'}
+                                    >
+                                        <i className="bi bi-x-circle me-1"></i>
+                                        ফিল্টার রিসেট
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
+            </div>
+            
+            {/* সর্টিং স্ট্যাটাস */}
+            {filters.sort_by !== 'relevance' && (
+                <div className="alert alert-info mb-4">
+                    <div className="d-flex align-items-center">
+                        <i className="bi bi-info-circle-fill me-2 fs-4"></i>
+                        <div>
+                            <strong>পণ্যগুলো সর্ট করা হয়েছে:</strong> {getSortLabel(filters.sort_by)}
+                            <div className="small mt-1">
+                                {filters.sort_by === 'price_asc' ? 'সর্বনিম্ন দামের পণ্য প্রথমে দেখানো হচ্ছে' :
+                                 filters.sort_by === 'price_desc' ? 'সর্বোচ্চ দামের পণ্য প্রথমে দেখানো হচ্ছে' :
+                                 'সর্বশেষ যোগকৃত পণ্য প্রথমে দেখানো হচ্ছে'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {/* মূল কন্টেন্ট */}
+            <div className="row">
                 {/* সার্চ রেজাল্ট */}
-                <div className="col-lg-9">
+                <div className="col-12">
                     {products.length === 0 ? (
                         <div className="card border-0 shadow-sm">
                             <div className="card-body text-center py-5">
+                                <div className="display-1 text-muted mb-3">
+                                    <i className="bi bi-search"></i>
+                                </div>
                                 <h4 className="text-muted mb-3">কোনো পণ্য পাওয়া যায়নি</h4>
                                 <p className="text-muted mb-4">
                                     "{query}" এর সাথে মিলে এমন কোনো পণ্য নেই।
                                 </p>
+                                <button 
+                                    className="btn btn-primary"
+                                    onClick={clearFilters}
+                                >
+                                    <i className="bi bi-arrow-clockwise me-1"></i>
+                                    ফিল্টার রিসেট করুন
+                                </button>
                             </div>
                         </div>
                     ) : (
                         <>
+                            {/* সর্টিং ভেরিফিকেশন (ডিবাগ) */}
+                            {process.env.NODE_ENV === 'development' && products.length > 1 && (
+                                <div className="alert alert-warning mb-3">
+                                    <details>
+                                        <summary className="fw-bold">সর্টিং ডিবাগ তথ্য</summary>
+                                        <div className="mt-2">
+                                            <p className="mb-1">
+                                                <strong>সর্ট টাইপ:</strong> {sort_by || filters.sort_by}
+                                            </p>
+                                            <p className="mb-1">
+                                                <strong>প্রথম ৩টি পণ্যের দাম:</strong>
+                                            </p>
+                                            <ul className="mb-1">
+                                                {products.slice(0, 3).map((p, i) => (
+                                                    <li key={i}>
+                                                        {i+1}. {p.name}: <strong>৳{p.price}</strong>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                            <button 
+                                                className="btn btn-sm btn-outline-info mt-1"
+                                                onClick={() => performSearch(filters.sort_by)}
+                                            >
+                                                API আবার কল করুন
+                                            </button>
+                                        </div>
+                                    </details>
+                                </div>
+                            )}
+                            
                             {/* পণ্য গ্রিড */}
-                            <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
-                                {products.map((product, index) => (
-                                    <div key={`${product.id}-${index}`} className="col">
+                            <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                                {products.map((product) => (
+                                    <div key={product.id} className="col">
                                         <ProductCard product={product} />
                                     </div>
                                 ))}
@@ -442,11 +478,8 @@ const SearchResults = () => {
                                         <li className={`page-item ${current_page <= 1 ? 'disabled' : ''}`}>
                                             <button 
                                                 className="page-link"
-                                                onClick={() => {
-                                                    const params = new URLSearchParams(location.search);
-                                                    params.set('page', current_page - 1);
-                                                    navigate(`?${params.toString()}`);
-                                                }}
+                                                onClick={() => handlePageChange(parseInt(current_page) - 1)}
+                                                disabled={current_page <= 1}
                                             >
                                                 <i className="bi bi-chevron-left"></i>
                                             </button>
@@ -455,14 +488,10 @@ const SearchResults = () => {
                                         {[...Array(Math.min(5, total_pages)).keys()].map(i => {
                                             const pageNum = i + 1;
                                             return (
-                                                <li key={pageNum} className={`page-item ${current_page === pageNum ? 'active' : ''}`}>
+                                                <li key={pageNum} className={`page-item ${parseInt(current_page) === pageNum ? 'active' : ''}`}>
                                                     <button 
                                                         className="page-link"
-                                                        onClick={() => {
-                                                            const params = new URLSearchParams(location.search);
-                                                            params.set('page', pageNum);
-                                                            navigate(`?${params.toString()}`);
-                                                        }}
+                                                        onClick={() => handlePageChange(pageNum)}
                                                     >
                                                         {pageNum}
                                                     </button>
@@ -470,14 +499,17 @@ const SearchResults = () => {
                                             );
                                         })}
                                         
+                                        {total_pages > 5 && (
+                                            <li className="page-item disabled">
+                                                <span className="page-link">...</span>
+                                            </li>
+                                        )}
+                                        
                                         <li className={`page-item ${current_page >= total_pages ? 'disabled' : ''}`}>
                                             <button 
                                                 className="page-link"
-                                                onClick={() => {
-                                                    const params = new URLSearchParams(location.search);
-                                                    params.set('page', current_page + 1);
-                                                    navigate(`?${params.toString()}`);
-                                                }}
+                                                onClick={() => handlePageChange(parseInt(current_page) + 1)}
+                                                disabled={current_page >= total_pages}
                                             >
                                                 <i className="bi bi-chevron-right"></i>
                                             </button>
@@ -490,6 +522,35 @@ const SearchResults = () => {
                 </div>
             </div>
             
+            {/* ফুটার সেকশন */}
+            <div className="mt-5 pt-4 border-top">
+                <div className="d-flex flex-wrap justify-content-between align-items-center">
+                    <div>
+                        <small className="text-muted">
+                            <i className="bi bi-info-circle me-1"></i>
+                            {total_results} টি পণ্য পাওয়া গেছে | সর্ট: {getSortLabel(sort_by || filters.sort_by)}
+                        </small>
+                    </div>
+                    <div className="d-flex flex-wrap gap-2">
+                        <button 
+                            className="btn btn-outline-primary btn-sm"
+                            onClick={() => window.scrollTo(0, 0)}
+                        >
+                            <i className="bi bi-arrow-up me-1"></i>
+                            উপরে যান
+                        </button>
+                        <button 
+                            className="btn btn-outline-secondary btn-sm"
+                            onClick={() => navigate('/')}
+                        >
+                            <i className="bi bi-house me-1"></i>
+                            হোমপেজ
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            {/* CSS */}
             <style jsx>{`
                 .sort-dropdown-menu {
                     animation: fadeIn 0.2s ease;
@@ -502,15 +563,35 @@ const SearchResults = () => {
                     background: none;
                     border: none;
                     text-align: left;
+                    cursor: pointer;
                 }
                 
                 .sort-option-item:hover {
                     background-color: #f8f9fa !important;
                 }
                 
+                .sort-option-item.bg-primary:hover {
+                    background-color: #0b5ed7 !important;
+                }
+                
                 @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(-10px); }
-                    to { opacity: 1; transform: translateY(0); }
+                    from { 
+                        opacity: 0; 
+                        transform: translateY(-10px); 
+                    }
+                    to { 
+                        opacity: 1; 
+                        transform: translateY(0); 
+                    }
+                }
+                
+                .product-grid {
+                    transition: all 0.3s ease;
+                }
+                
+                .pagination .page-item.active .page-link {
+                    background-color: #0d6efd;
+                    border-color: #0d6efd;
                 }
             `}</style>
         </div>
