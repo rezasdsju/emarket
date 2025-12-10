@@ -35,13 +35,16 @@ class Product(models.Model):
         decimal_places=2, 
         verbose_name="Price"
     )
-    # ✅ নতুন: পরিমাণ ফিল্ড যোগ করা হয়েছে
+    
+    # ✅ FIXED: blank=True যোগ করা হয়েছে
     quantity_unit = models.CharField(
         max_length=50, 
         default="1 kg",
-        verbose_name="Quantity Unit",
-        help_text="যেমন: 1 kg, 500 gm, 250 ml"
+        verbose_name="পরিমাণের একক",
+        help_text="যেমন: 1 kg, 500 gm, 250 ml, 1 পিস ইত্যাদি",
+        blank=True  # ✅ এই লাইন যোগ করুন
     )
+    
     description = models.TextField(blank=True, verbose_name="Description")
     stock = models.PositiveIntegerField(default=0, verbose_name="Stock Quantity")
     available = models.BooleanField(default=True, verbose_name="Is Available?")
