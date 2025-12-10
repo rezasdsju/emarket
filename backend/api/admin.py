@@ -148,7 +148,7 @@ class ProductAdmin(admin.ModelAdmin):
     
     readonly_fields = ('image_preview_large', 'discount_price')
     
-    # Bulk actions
+    # Bulk actions - IMPORTANT: Use simple string descriptions without % formatting
     actions = ['activate_discounts', 'deactivate_discounts', 'apply_percentage_discount', 'make_available', 'make_unavailable']
     
     def activate_discounts(self, request, queryset):
@@ -162,18 +162,16 @@ class ProductAdmin(admin.ModelAdmin):
     deactivate_discounts.short_description = "Deactivate discount"
     
     def apply_percentage_discount(self, request, queryset):
-        """Apply 10% discount to selected products"""
         for product in queryset:
             if product.discount_type == 'none':
                 product.discount_type = 'percentage'
                 product.discount_value = 10
                 product.discount_active = True
-                # Calculate discount price
                 if product.discount_type == 'percentage':
                     discount_amount = product.price * (product.discount_value / 100)
                     product.discount_price = product.price - discount_amount
                 product.save()
-        self.message_user(request, f'Applied 10% discount to {queryset.count()} products.')
+        self.message_user(request, 'Applied 10% discount to selected products.')
     apply_percentage_discount.short_description = "Apply 10% discount"
     
     def make_available(self, request, queryset):
