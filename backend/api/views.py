@@ -224,7 +224,15 @@ def search_products(request):
             Q(category__name__icontains=query)
         )
     
-    products = products_qs.filter(q_objects).distinct()
+    # ✅ সর্টিং আগে ডাটাবেজ লেভেলে প্রয়োগ করুন
+    if sort_by == 'price_asc':
+        products = products_qs.filter(q_objects).distinct().order_by('price')
+    elif sort_by == 'price_desc':
+        products = products_qs.filter(q_objects).distinct().order_by('-price')
+    elif sort_by == 'newest':
+        products = products_qs.filter(q_objects).distinct().order_by('-created')
+    else:  # relevance (ডিফল্ট)
+        products = products_qs.filter(q_objects).distinct()
     
     # ✅ রিলেভেন্স স্কোরিং ফাংশন
     def calculate_relevance(product, query):
@@ -276,14 +284,8 @@ def search_products(request):
             print(f"Error serializing product {product.id}: {e}")
             continue
     
-    # ✅ সর্টিং লজিক - সার্চ রেজাল্টে সর্টিং কাজ করবে
-    if sort_by == 'price_asc':
-        product_list.sort(key=lambda x: float(x['price']))
-    elif sort_by == 'price_desc':
-        product_list.sort(key=lambda x: float(x['price']), reverse=True)
-    elif sort_by == 'newest':
-        product_list.sort(key=lambda x: x.get('created', ''), reverse=True)
-    else:  # relevance (ডিফল্ট)
+    # ✅ শুধুমাত্র relevance সর্টের জন্য ক্লায়েন্ট সাইড সর্টিং
+    if sort_by == 'relevance':
         product_list.sort(key=lambda x: x['relevance_score'], reverse=True)
     
     # পেজিনেশন
