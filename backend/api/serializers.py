@@ -2,9 +2,14 @@ from rest_framework import serializers
 from .models import Category, Product, Order, OrderItem, Payment
 
 class CategorySerializer(serializers.ModelSerializer):
+    product_count = serializers.SerializerMethodField()
+    
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug']
+        fields = ['id', 'name', 'slug', 'product_count']
+    
+    def get_product_count(self, obj):
+        return obj.products.count()
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -34,10 +39,11 @@ class ProductSerializer(serializers.ModelSerializer):
             'image', 
             'image_url',
             'price', 
+            'quantity_unit',  # ✅ নতুন ফিল্ড যোগ করা হয়েছে
             'description', 
             'stock', 
             'available',
-            'featured',  # ✅ নতুন ফিল্ড যোগ করুন
+            'featured',
             'created', 
             'updated'
         ]
@@ -45,6 +51,7 @@ class ProductSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'slug': {'required': False},
             'image': {'required': False},
+            'quantity_unit': {'required': False, 'default': '1 kg'},  # ✅ ডিফল্ট ভ্যালু
         }
     
     def get_image_url(self, obj):

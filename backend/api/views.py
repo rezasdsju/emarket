@@ -9,6 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
 from django.db import models
 import uuid
+from operator import itemgetter
 
 from .models import Category, Product, Order, OrderItem, Payment
 from .serializers import (
@@ -37,8 +38,8 @@ class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.filter(available=True)
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['category', 'available', 'featured']  # ✅ featured যোগ করুন
-    search_fields = ['name', 'description']
+    filterset_fields = ['category', 'available', 'featured']
+    search_fields = ['name', 'description', 'quantity_unit']  # ✅ quantity_unit যোগ করা হয়েছে
     ordering_fields = ['price', 'created', 'name']
     ordering = ['-created']
     parser_classes = [MultiPartParser, FormParser]
@@ -155,9 +156,6 @@ class PaymentViewSet(viewsets.ModelViewSet):
         
         # Log payment creation
         print(f"Payment created: {transaction_id} for Order #{payment.order.id}")
-        
-        # এখানে bKash/Rocket API কল করতে হবে (পরে যোগ করব)
-        # payment.payment_method অনুযায়ী আলাদা API কল হবে
 
 
 # ============================ SEARCH VIEWS ============================
@@ -170,6 +168,7 @@ def search_products(request):
     category_slug = request.GET.get('category', None)
     min_price = request.GET.get('min_price', None)
     max_price = request.GET.get('max_price', None)
+    sort_by = request.GET.get('sort_by', 'relevance')  # ✅ নতুন: সর্টিং প্যারামিটার
     
     if not query:
         return Response({
@@ -212,6 +211,7 @@ def search_products(request):
             q_objects |= (
                 Q(name__icontains=term) |
                 Q(description__icontains=term) |
+                Q(quantity_unit__icontains=term) |  # ✅ পরিমাণ ফিল্ড যোগ করা হয়েছে
                 Q(category__name__icontains=term)
             )
     
@@ -220,12 +220,13 @@ def search_products(request):
         q_objects = (
             Q(name__icontains=query) |
             Q(description__icontains=query) |
+            Q(quantity_unit__icontains=query) |
             Q(category__name__icontains=query)
         )
     
     products = products_qs.filter(q_objects).distinct()
     
-    # ✅ রিলেভেন্স স্কোরিং ফাংশন - fixed
+    # ✅ রিলেভেন্স স্কোরিং ফাংশন
     def calculate_relevance(product, query):
         score = 0
         
@@ -243,13 +244,18 @@ def search_products(request):
             if term.lower() in (product.description or '').lower():
                 score += 20
         
+        # পরিমাণে ম্যাচ
+        for term in search_terms:
+            if term.lower() in (product.quantity_unit or '').lower():
+                score += 25
+        
         # ক্যাটাগরিতে ম্যাচ
         for term in search_terms:
             if term.lower() in (product.category.name or '').lower():
                 score += 30
         
-        # জনপ্রিয় পণ্যের বোনাস - ✅ hasattr চেক যোগ করুন
-        if hasattr(product, 'featured') and product.featured:
+        # জনপ্রিয় পণ্যের বোনাস
+        if product.featured:
             score += 10
         
         # স্টক থাকলে বোনাস
@@ -267,12 +273,18 @@ def search_products(request):
             product_data['relevance_score'] = calculate_relevance(product, query)
             product_list.append(product_data)
         except Exception as e:
-            # লগ করুন কিন্তু প্রোগ্রাম ক্রাশ করবেন না
             print(f"Error serializing product {product.id}: {e}")
             continue
     
-    # রিলেভেন্স অনুসারে সর্টিং
-    product_list.sort(key=lambda x: x['relevance_score'], reverse=True)
+    # ✅ সর্টিং লজিক - সার্চ রেজাল্টে সর্টিং কাজ করবে
+    if sort_by == 'price_asc':
+        product_list.sort(key=lambda x: float(x['price']))
+    elif sort_by == 'price_desc':
+        product_list.sort(key=lambda x: float(x['price']), reverse=True)
+    elif sort_by == 'newest':
+        product_list.sort(key=lambda x: x.get('created', ''), reverse=True)
+    else:  # relevance (ডিফল্ট)
+        product_list.sort(key=lambda x: x['relevance_score'], reverse=True)
     
     # পেজিনেশন
     page = request.GET.get('page', 1)
@@ -296,6 +308,7 @@ def search_products(request):
         'total_results': total_items,
         'total_pages': total_pages,
         'current_page': page,
+        'sort_by': sort_by,  # ✅ রেসপন্সে সর্টিং তথ্য যুক্ত করা হয়েছে
         'products': paginated_products,
         'filters': {
             'category': category_slug,
@@ -317,9 +330,10 @@ def autocomplete_suggestions(request):
     
     # পণ্যের নাম থেকে সুজেশন
     product_suggestions = Product.objects.filter(
-        name__icontains=query,
+        Q(name__icontains=query) |
+        Q(quantity_unit__icontains=query),
         available=True
-    ).values('name', 'slug', 'id')[:10]
+    ).values('name', 'slug', 'id', 'quantity_unit')[:10]
     
     # ক্যাটাগরি থেকে সুজেশন
     category_suggestions = Category.objects.filter(
@@ -336,9 +350,10 @@ def autocomplete_suggestions(request):
         if name not in seen_names:
             suggestions.append({
                 'type': 'product',
-                'name': name,
+                'name': f"{name} ({product['quantity_unit']})",
                 'slug': product['slug'],
                 'id': product['id'],
+                'quantity_unit': product['quantity_unit'],
                 'url': f'/product/{product["id"]}'
             })
             seen_names.add(name)
@@ -356,7 +371,7 @@ def autocomplete_suggestions(request):
             })
             seen_names.add(name)
     
-    # জনপ্রিয় সার্চ টার্মস (স্ট্যাটিক বা ডাইনামিক)
+    # জনপ্রিয় সার্চ টার্মস
     popular_searches = [
         'খেজুর', 'চেরি ফল', 'কাট বাদাম', 'দেশি বাদাম', 'মধু', 
         'কিচমিচ', 'আখরোট', 'হানি নাট'
@@ -374,7 +389,7 @@ def autocomplete_suggestions(request):
     
     return Response({
         'query': query,
-        'suggestions': suggestions[:15]  # সর্বোচ্চ ১৫টি
+        'suggestions': suggestions[:15]
     })
 
 

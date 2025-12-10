@@ -13,10 +13,11 @@ const SearchResults = () => {
         category: '',
         min_price: '',
         max_price: '',
-        sort_by: 'relevance'
+        sort_by: 'relevance'  // ✅ ডিফল্ট সর্টিং
     });
     
     const query = new URLSearchParams(location.search).get('q') || '';
+    const page = new URLSearchParams(location.search).get('page') || 1;
     const API_BASE_URL = 'https://organic.satbeta.top';
     
     useEffect(() => {
@@ -25,27 +26,31 @@ const SearchResults = () => {
         } else {
             navigate('/');
         }
-    }, [query, location.state, filters]);
+    }, [query, page, filters.sort_by]);  // ✅ sort_by পরিবর্তন হলে সার্চ আপডেট হবে
     
     const performSearch = async () => {
         setLoading(true);
         setError(null);
         
         try {
-            let apiUrl = `${API_BASE_URL}/api/search/?q=${encodeURIComponent(query)}`;
+            let apiUrl = `${API_BASE_URL}/api/search/?q=${encodeURIComponent(query)}&page=${page}`;
             
             // ফিল্টার প্যারামিটার যোগ
             const params = [];
             if (filters.category) params.push(`category=${filters.category}`);
             if (filters.min_price) params.push(`min_price=${filters.min_price}`);
             if (filters.max_price) params.push(`max_price=${filters.max_price}`);
+            if (filters.sort_by) params.push(`sort_by=${filters.sort_by}`);  // ✅ সার্চ এন্ডপয়েন্টে সর্ট প্যারামিটার পাঠানো
             
             if (params.length > 0) {
                 apiUrl += '&' + params.join('&');
             }
             
+            console.log('Search API URL:', apiUrl);
+            
             const response = await axios.get(apiUrl, {
-                headers: { 'Accept': 'application/json' }
+                headers: { 'Accept': 'application/json' },
+                timeout: 10000
             });
             
             setSearchData(response.data);
@@ -120,7 +125,7 @@ const SearchResults = () => {
         );
     }
     
-    const { products, total_results, total_pages, current_page } = searchData;
+    const { products, total_results, total_pages, current_page, sort_by } = searchData;
     
     return (
         <div className="search-results-page container mt-4">
@@ -141,7 +146,13 @@ const SearchResults = () => {
                                 <strong>{total_results}</strong> টি পণ্য পাওয়া গেছে
                             </div>
                             <div className="text-muted small">
-                                পৃষ্ঠা {current_page} / {total_pages}
+                                পৃষ্ঠা {current_page} / {total_pages} | 
+                                সর্ট: {
+                                    sort_by === 'relevance' ? 'রিলেভেন্স' :
+                                    sort_by === 'price_asc' ? 'দাম: কম থেকে বেশি' :
+                                    sort_by === 'price_desc' ? 'দাম: বেশি থেকে কম' :
+                                    sort_by === 'newest' ? 'নতুন আগে' : 'রিলেভেন্স'
+                                }
                             </div>
                         </div>
                     </div>
@@ -158,24 +169,28 @@ const SearchResults = () => {
                                 <li>
                                     <button className="dropdown-item" 
                                             onClick={() => handleFilterChange('sort_by', 'relevance')}>
+                                        <i className="bi bi-star me-2"></i>
                                         রিলেভেন্স
                                     </button>
                                 </li>
                                 <li>
                                     <button className="dropdown-item" 
                                             onClick={() => handleFilterChange('sort_by', 'price_asc')}>
+                                        <i className="bi bi-sort-numeric-up me-2"></i>
                                         দাম: কম থেকে বেশি
                                     </button>
                                 </li>
                                 <li>
                                     <button className="dropdown-item" 
                                             onClick={() => handleFilterChange('sort_by', 'price_desc')}>
+                                        <i className="bi bi-sort-numeric-down me-2"></i>
                                         দাম: বেশি থেকে কম
                                     </button>
                                 </li>
                                 <li>
                                     <button className="dropdown-item" 
                                             onClick={() => handleFilterChange('sort_by', 'newest')}>
+                                        <i className="bi bi-clock me-2"></i>
                                         নতুন আগে
                                     </button>
                                 </li>
@@ -222,21 +237,8 @@ const SearchResults = () => {
                                 </div>
                             </div>
                             
-                            {/* সার্চ টিপস */}
-                            <div className="alert alert-info">
-                                <h6>
-                                    <i className="bi bi-lightbulb me-2"></i>
-                                    সার্চ টিপস
-                                </h6>
-                                <ul className="small mb-0">
-                                    <li>বেশি ভালো রেজাল্ট পেতে পুরো শব্দ ব্যবহার করুন</li>
-                                    <li>ব্র্যান্ড নাম দিয়ে সার্চ করুন</li>
-                                    <li>ক্যাটাগরি অনুযায়ী ব্রাউজ করুন</li>
-                                </ul>
-                            </div>
-                            
                             {/* ফিল্টার রিসেট */}
-                            {(filters.min_price || filters.max_price || filters.category) && (
+                            {(filters.min_price || filters.max_price || filters.category || filters.sort_by !== 'relevance') && (
                                 <button 
                                     className="btn btn-outline-secondary w-100 mt-3"
                                     onClick={clearFilters}
@@ -298,7 +300,7 @@ const SearchResults = () => {
                                         <li className={`page-item ${current_page <= 1 ? 'disabled' : ''}`}>
                                             <button 
                                                 className="page-link"
-                                                onClick={() => navigate(`/search?q=${query}&page=${current_page - 1}`)}
+                                                onClick={() => navigate(`/search?q=${query}&page=${current_page - 1}&sort_by=${filters.sort_by}`)}
                                             >
                                                 <i className="bi bi-chevron-left"></i>
                                             </button>
@@ -310,7 +312,7 @@ const SearchResults = () => {
                                                 <li key={pageNum} className={`page-item ${current_page === pageNum ? 'active' : ''}`}>
                                                     <button 
                                                         className="page-link"
-                                                        onClick={() => navigate(`/search?q=${query}&page=${pageNum}`)}
+                                                        onClick={() => navigate(`/search?q=${query}&page=${pageNum}&sort_by=${filters.sort_by}`)}
                                                     >
                                                         {pageNum}
                                                     </button>
@@ -321,7 +323,7 @@ const SearchResults = () => {
                                         <li className={`page-item ${current_page >= total_pages ? 'disabled' : ''}`}>
                                             <button 
                                                 className="page-link"
-                                                onClick={() => navigate(`/search?q=${query}&page=${current_page + 1}`)}
+                                                onClick={() => navigate(`/search?q=${query}&page=${current_page + 1}&sort_by=${filters.sort_by}`)}
                                             >
                                                 <i className="bi bi-chevron-right"></i>
                                             </button>
@@ -349,24 +351,6 @@ const SearchResults = () => {
                     ))}
                 </div>
             </div>
-            
-            {/* CSS */}
-            <style jsx>{`
-                .search-header {
-                    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-                    padding: 20px;
-                    border-radius: 10px;
-                }
-                
-                .product-card {
-                    transition: all 0.3s ease;
-                }
-                
-                .product-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-                }
-            `}</style>
         </div>
     );
 };

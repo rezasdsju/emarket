@@ -35,10 +35,17 @@ class Product(models.Model):
         decimal_places=2, 
         verbose_name="Price"
     )
+    # ✅ নতুন: পরিমাণ ফিল্ড যোগ করা হয়েছে
+    quantity_unit = models.CharField(
+        max_length=50, 
+        default="1 kg",
+        verbose_name="Quantity Unit",
+        help_text="যেমন: 1 kg, 500 gm, 250 ml"
+    )
     description = models.TextField(blank=True, verbose_name="Description")
     stock = models.PositiveIntegerField(default=0, verbose_name="Stock Quantity")
     available = models.BooleanField(default=True, verbose_name="Is Available?")
-    featured = models.BooleanField(default=False, verbose_name="Featured Product")  # ✅ নতুন ফিল্ড যোগ করুন
+    featured = models.BooleanField(default=False, verbose_name="Featured Product")
     created = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated = models.DateTimeField(auto_now=True, verbose_name="Updated At")
     
@@ -49,15 +56,15 @@ class Product(models.Model):
         ordering = ['-created']
         verbose_name = "Product"
         verbose_name_plural = "Products"
-        # সিম্পল indexes - কোনো error নেই
         indexes = [
             models.Index(fields=['name']),
             models.Index(fields=['category']),
-            models.Index(fields=['featured']),  # ✅ নতুন ইন্ডেক্স যোগ করুন
+            models.Index(fields=['featured']),
+            models.Index(fields=['available']),
         ]
     
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.quantity_unit})"
     
     def get_image_url(self):
         """Return full image URL"""
@@ -66,15 +73,15 @@ class Product(models.Model):
         return None
     
     def update_search_vector(self):
-        """Search vector আপডেট করার মেথড (ম্যানুয়ালি কল করতে হবে)"""
+        """Search vector আপডেট করার মেথড"""
         try:
             from django.contrib.postgres.search import SearchVector
             Product.objects.filter(pk=self.pk).update(
                 search_vector=SearchVector('name', weight='A') +
-                              SearchVector('description', weight='B')
+                              SearchVector('description', weight='B') +
+                              SearchVector('quantity_unit', weight='C')
             )
         except Exception:
-            # If PostgreSQL extensions not available, skip
             pass
 
 
@@ -154,6 +161,7 @@ class Payment(models.Model):
         ('rocket', 'Rocket'),
         ('nagad', 'Nagad'),
         ('card', 'Card'),
+        ('cod', 'Cash on Delivery'),
     ])
     status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='pending')
     mobile_number = models.CharField(max_length=15, blank=True, null=True)

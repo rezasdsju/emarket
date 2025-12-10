@@ -2,26 +2,21 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const ProductCard = ({ product }) => {
-    // ইমেজ URL তৈরি - 127.0.0.1:8000 থেকে সরাসরি সার্ভার URL এ পরিবর্তন
+    // ইমেজ URL তৈরি
     const getImageUrl = () => {
-        // যদি সম্পূর্ণ URL থাকে
         if (product.image_url && product.image_url.startsWith('http')) {
             return product.image_url;
         }
         
-        // যদি রিলেটিভ path থাকে
         if (product.image) {
-            // Remove any leading slash if present
             const imagePath = product.image.startsWith('/') ? product.image.substring(1) : product.image;
             return `https://organic.satbeta.top/media/${imagePath}`;
         }
         
-        // যদি image field থাকে (Media URL)
         if (product.image) {
             return `https://organic.satbeta.top${product.image}`;
         }
         
-        // ডিফল্ট placeholder
         return 'https://via.placeholder.com/300x200.png?text=No+Image';
     };
     
@@ -65,10 +60,11 @@ const ProductCard = ({ product }) => {
                     </div>
                 )}
                 
-                {product.discount_price && product.discount_price < product.price && (
-                    <div className="position-absolute top-0 end-0 bg-success text-white p-2" 
+                {product.featured && (
+                    <div className="position-absolute top-0 end-0 bg-warning text-dark p-2" 
                          style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>
-                        {Math.round(((product.price - product.discount_price) / product.price) * 100)}% ছাড়
+                        <i className="bi bi-star-fill me-1"></i>
+                        বিশেষ
                     </div>
                 )}
             </div>
@@ -86,21 +82,19 @@ const ProductCard = ({ product }) => {
                     {product.name || 'পণ্যের নাম নেই'}
                 </h6>
                 
+                {/* ✅ পরিমাণ দেখানো হয়েছে */}
+                <div className="quantity-unit mb-2">
+                    <span className="badge bg-info text-dark">
+                        <i className="bi bi-box me-1"></i>
+                        {product.quantity_unit || '1 kg'}
+                    </span>
+                </div>
+                
                 <div className="price-section mb-2">
-                    {product.discount_price && product.discount_price < product.price ? (
-                        <div className="d-flex align-items-center">
-                            <h5 className="text-danger fw-bold mb-0 me-2">
-                                ৳{product.discount_price.toLocaleString('bn-BD')}
-                            </h5>
-                            <span className="text-muted text-decoration-line-through" style={{ fontSize: '0.9rem' }}>
-                                ৳{product.price.toLocaleString('bn-BD')}
-                            </span>
-                        </div>
-                    ) : (
-                        <h5 className="text-primary fw-bold mb-0">
-                            ৳{product.price ? product.price.toLocaleString('bn-BD') : '0'}
-                        </h5>
-                    )}
+                    <h5 className="text-primary fw-bold mb-0">
+                        ৳{product.price ? product.price.toLocaleString('bn-BD') : '0'}
+                    </h5>
+                    <small className="text-muted">পরিমাণ প্রতি</small>
                 </div>
                 
                 <p className="card-text text-muted mb-3 flex-grow-1" style={{
@@ -121,9 +115,11 @@ const ProductCard = ({ product }) => {
                             <span className={`badge ${product.available ? 'bg-success' : 'bg-danger'} me-2`}>
                                 {product.available ? 'ইন স্টক' : 'স্টক নেই'}
                             </span>
-                            <span className="badge bg-secondary">
-                                স্টক: {product.stock || 0}
-                            </span>
+                            {product.stock > 0 && (
+                                <span className="badge bg-secondary">
+                                    স্টক: {product.stock || 0}
+                                </span>
+                            )}
                         </div>
                         
                         <Link 
@@ -147,20 +143,9 @@ const ProductCard = ({ product }) => {
                             </span>
                         </div>
                     )}
-                    
-                    {product.brand && (
-                        <div className="brand-section mt-2 pt-2 border-top">
-                            <small className="text-muted d-block mb-1">ব্র্যান্ড:</small>
-                            <span className="badge bg-info text-white px-3 py-1" 
-                                  style={{ fontSize: '0.8rem' }}>
-                                {product.brand}
-                            </span>
-                        </div>
-                    )}
                 </div>
             </div>
             
-            {/* Hover Effects */}
             <style jsx>{`
                 .hover-shadow:hover {
                     transform: translateY(-5px);
