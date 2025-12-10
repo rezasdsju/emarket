@@ -33,19 +33,24 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    # ✅ FIXED: list_display এ আসল ফিল্ড নাম ব্যবহার করুন
     list_display = (
         'name', 
         'category', 
-        'get_price_display', 
-        'get_discount_display', 
-        'get_final_price',
+        'price',  # সরাসরি ফিল্ড
+        'discount_type',  # সরাসরি ফিল্ড
+        'discount_value',  # সরাসরি ফিল্ড
+        'discount_price',  # সরাসরি ফিল্ড
         'quantity_unit',
         'stock', 
         'available', 
         'featured', 
         'discount_active',
-        'created'
+        'created',
+        'get_discount_display',  # শুধু ডিসপ্লের জন্য
+        'image_preview'
     )
+    
     list_filter = (
         'available', 
         'featured', 
@@ -54,6 +59,8 @@ class ProductAdmin(admin.ModelAdmin):
         'discount_active',
         'discount_type'
     )
+    
+    # ✅ FIXED: list_display এ যে ফিল্ডগুলো আছে শুধু সেগুলোই list_editable তে রাখুন
     list_editable = (
         'price', 
         'quantity_unit',
@@ -64,6 +71,7 @@ class ProductAdmin(admin.ModelAdmin):
         'discount_type',
         'discount_value'
     )
+    
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name', 'description', 'quantity_unit')
     raw_id_fields = ('category',)
@@ -99,17 +107,8 @@ class ProductAdmin(admin.ModelAdmin):
     readonly_fields = ('image_preview', 'discount_price')
     
     # Custom methods for display
-    def get_price_display(self, obj):
-        if obj.discount_type != 'none' and obj.discount_active and obj.discount_price:
-            return format_html(
-                '<span style="text-decoration: line-through; color: #999;">৳{}</span>',
-                obj.price
-            )
-        return f"৳{obj.price}"
-    get_price_display.short_description = 'Price'
-    get_price_display.admin_order_field = 'price'
-    
     def get_discount_display(self, obj):
+        """Display discount in a user-friendly way"""
         if obj.discount_type == 'none' or not obj.discount_active:
             return format_html('<span style="color: #999;">No Discount</span>')
         
@@ -135,17 +134,7 @@ class ProductAdmin(admin.ModelAdmin):
                 obj.discount_value
             )
         return format_html('<span style="color: #999;">No Discount</span>')
-    get_discount_display.short_description = 'Discount'
-    
-    def get_final_price(self, obj):
-        if obj.discount_type != 'none' and obj.discount_active and obj.discount_price:
-            return format_html(
-                '<span style="color: #f44336; font-weight: bold;">৳{}</span>',
-                obj.discount_price
-            )
-        return f"৳{obj.price}"
-    get_final_price.short_description = 'Final Price'
-    get_final_price.admin_order_field = 'price'
+    get_discount_display.short_description = 'Discount Display'
     
     def image_preview(self, obj):
         if obj.image:
@@ -155,6 +144,16 @@ class ProductAdmin(admin.ModelAdmin):
             )
         return format_html('<span style="color: #999;">No Image</span>')
     image_preview.short_description = 'Image Preview'
+    
+    # ✅ FIXED: discount_price কে format করার জন্য নতুন method
+    def get_final_price_display(self, obj):
+        if obj.discount_type != 'none' and obj.discount_active and obj.discount_price:
+            return format_html(
+                '<span style="color: #f44336; font-weight: bold;">৳{}</span>',
+                obj.discount_price
+            )
+        return f"৳{obj.price}"
+    get_final_price_display.short_description = 'Final Price'
     
     # Bulk actions
     actions = ['activate_discounts', 'deactivate_discounts', 'apply_percentage_discount']
@@ -189,7 +188,7 @@ class OrderAdmin(admin.ModelAdmin):
         'name', 
         'email', 
         'phone', 
-        'get_total_price_display', 
+        'total_price', 
         'discount_applied',
         'paid', 
         'created'
