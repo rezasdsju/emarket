@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ProductCard from './ProductCard';
@@ -13,8 +13,12 @@ const SearchResults = () => {
         category: '',
         min_price: '',
         max_price: '',
-        sort_by: 'relevance'  // ✅ ডিফল্ট সর্টিং
+        sort_by: 'relevance'
     });
+    
+    // ✅ সর্ট ড্রপডাউনের জন্য স্টেট
+    const [showSortDropdown, setShowSortDropdown] = useState(false);
+    const sortDropdownRef = useRef(null);
     
     const query = new URLSearchParams(location.search).get('q') || '';
     const page = new URLSearchParams(location.search).get('page') || 1;
@@ -26,7 +30,19 @@ const SearchResults = () => {
         } else {
             navigate('/');
         }
-    }, [query, page, filters.sort_by]);  // ✅ sort_by পরিবর্তন হলে সার্চ আপডেট হবে
+    }, [query, page, filters.sort_by]);
+    
+    // ✅ ড্রপডাউন বাইরে ক্লিক করলে বন্ধ করার জন্য
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target)) {
+                setShowSortDropdown(false);
+            }
+        };
+        
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
     
     const performSearch = async () => {
         setLoading(true);
@@ -35,12 +51,11 @@ const SearchResults = () => {
         try {
             let apiUrl = `${API_BASE_URL}/api/search/?q=${encodeURIComponent(query)}&page=${page}`;
             
-            // ফিল্টার প্যারামিটার যোগ
             const params = [];
             if (filters.category) params.push(`category=${filters.category}`);
             if (filters.min_price) params.push(`min_price=${filters.min_price}`);
             if (filters.max_price) params.push(`max_price=${filters.max_price}`);
-            if (filters.sort_by) params.push(`sort_by=${filters.sort_by}`);  // ✅ সার্চ এন্ডপয়েন্টে সর্ট প্যারামিটার পাঠানো
+            if (filters.sort_by) params.push(`sort_by=${filters.sort_by}`);
             
             if (params.length > 0) {
                 apiUrl += '&' + params.join('&');
@@ -68,6 +83,11 @@ const SearchResults = () => {
             ...prev,
             [key]: value
         }));
+        setShowSortDropdown(false); // ✅ সর্ট নির্বাচন করলে ড্রপডাউন বন্ধ হবে
+    };
+    
+    const handleSortSelect = (sortValue) => {
+        handleFilterChange('sort_by', sortValue);
     };
     
     const clearFilters = () => {
@@ -77,6 +97,7 @@ const SearchResults = () => {
             max_price: '',
             sort_by: 'relevance'
         });
+        setShowSortDropdown(false);
     };
     
     // যদি state থেকে ডাটা থাকে
@@ -86,6 +107,17 @@ const SearchResults = () => {
             setLoading(false);
         }
     }, [location.state]);
+    
+    // ✅ সর্ট অপশনের লেবেল ফাংশন
+    const getSortLabel = (sortValue) => {
+        switch(sortValue) {
+            case 'relevance': return 'রিলেভেন্স';
+            case 'price_asc': return 'দাম: কম থেকে বেশি';
+            case 'price_desc': return 'দাম: বেশি থেকে কম';
+            case 'newest': return 'নতুন আগে';
+            default: return 'রিলেভেন্স';
+        }
+    };
     
     if (loading) {
         return (
@@ -147,54 +179,112 @@ const SearchResults = () => {
                             </div>
                             <div className="text-muted small">
                                 পৃষ্ঠা {current_page} / {total_pages} | 
-                                সর্ট: {
-                                    sort_by === 'relevance' ? 'রিলেভেন্স' :
-                                    sort_by === 'price_asc' ? 'দাম: কম থেকে বেশি' :
-                                    sort_by === 'price_desc' ? 'দাম: বেশি থেকে কম' :
-                                    sort_by === 'newest' ? 'নতুন আগে' : 'রিলেভেন্স'
-                                }
+                                সর্ট: {getSortLabel(sort_by)}
                             </div>
                         </div>
                     </div>
                     
-                    <div className="col-md-4">
-                        <div className="dropdown">
-                            <button className="btn btn-outline-secondary w-100 dropdown-toggle" 
-                                    type="button" 
-                                    data-bs-toggle="dropdown">
-                                <i className="bi bi-sort-down me-1"></i>
-                                সর্ট করুন
+                    {/* ✅ সর্ট ড্রপডাউন - কাস্টম ইমপ্লিমেন্টেশন */}
+                    <div className="col-md-4" ref={sortDropdownRef}>
+                        <div className="position-relative">
+                            <button 
+                                className="btn btn-outline-secondary w-100 d-flex justify-content-between align-items-center"
+                                type="button"
+                                onClick={() => setShowSortDropdown(!showSortDropdown)}
+                                aria-expanded={showSortDropdown}
+                                aria-label="সর্ট অপশন"
+                            >
+                                <span>
+                                    <i className="bi bi-sort-down me-1"></i>
+                                    সর্ট: {getSortLabel(filters.sort_by)}
+                                </span>
+                                <i className={`bi bi-chevron-${showSortDropdown ? 'up' : 'down'}`}></i>
                             </button>
-                            <ul className="dropdown-menu">
-                                <li>
-                                    <button className="dropdown-item" 
-                                            onClick={() => handleFilterChange('sort_by', 'relevance')}>
-                                        <i className="bi bi-star me-2"></i>
-                                        রিলেভেন্স
-                                    </button>
-                                </li>
-                                <li>
-                                    <button className="dropdown-item" 
-                                            onClick={() => handleFilterChange('sort_by', 'price_asc')}>
-                                        <i className="bi bi-sort-numeric-up me-2"></i>
-                                        দাম: কম থেকে বেশি
-                                    </button>
-                                </li>
-                                <li>
-                                    <button className="dropdown-item" 
-                                            onClick={() => handleFilterChange('sort_by', 'price_desc')}>
-                                        <i className="bi bi-sort-numeric-down me-2"></i>
-                                        দাম: বেশি থেকে কম
-                                    </button>
-                                </li>
-                                <li>
-                                    <button className="dropdown-item" 
-                                            onClick={() => handleFilterChange('sort_by', 'newest')}>
-                                        <i className="bi bi-clock me-2"></i>
-                                        নতুন আগে
-                                    </button>
-                                </li>
-                            </ul>
+                            
+                            {/* ✅ কাস্টম ড্রপডাউন মেনু */}
+                            {showSortDropdown && (
+                                <div className="sort-dropdown-menu shadow-lg border rounded bg-white mt-1 position-absolute w-100"
+                                     style={{ zIndex: 1050 }}>
+                                    <div className="sort-option-header p-2 border-bottom bg-light">
+                                        <small className="text-muted">
+                                            <i className="bi bi-filter me-1"></i>
+                                            সর্ট অপশন নির্বাচন করুন
+                                        </small>
+                                    </div>
+                                    
+                                    <div className="sort-options">
+                                        <button
+                                            className={`sort-option-item w-100 text-start p-3 border-bottom ${filters.sort_by === 'relevance' ? 'bg-primary text-white' : ''}`}
+                                            onClick={() => handleSortSelect('relevance')}
+                                        >
+                                            <div className="d-flex align-items-center">
+                                                <i className="bi bi-star me-3"></i>
+                                                <div>
+                                                    <div className="fw-semibold">রিলেভেন্স</div>
+                                                    <small className={filters.sort_by === 'relevance' ? 'text-white' : 'text-muted'}>
+                                                        সার্চ টার্মের সাথে সবচেয়ে মিল আছে এমন
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </button>
+                                        
+                                        <button
+                                            className={`sort-option-item w-100 text-start p-3 border-bottom ${filters.sort_by === 'price_asc' ? 'bg-primary text-white' : ''}`}
+                                            onClick={() => handleSortSelect('price_asc')}
+                                        >
+                                            <div className="d-flex align-items-center">
+                                                <i className="bi bi-sort-numeric-up me-3"></i>
+                                                <div>
+                                                    <div className="fw-semibold">দাম: কম থেকে বেশি</div>
+                                                    <small className={filters.sort_by === 'price_asc' ? 'text-white' : 'text-muted'}>
+                                                        সর্বনিম্ন দামের পণ্য আগে
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </button>
+                                        
+                                        <button
+                                            className={`sort-option-item w-100 text-start p-3 border-bottom ${filters.sort_by === 'price_desc' ? 'bg-primary text-white' : ''}`}
+                                            onClick={() => handleSortSelect('price_desc')}
+                                        >
+                                            <div className="d-flex align-items-center">
+                                                <i className="bi bi-sort-numeric-down me-3"></i>
+                                                <div>
+                                                    <div className="fw-semibold">দাম: বেশি থেকে কম</div>
+                                                    <small className={filters.sort_by === 'price_desc' ? 'text-white' : 'text-muted'}>
+                                                        সর্বোচ্চ দামের পণ্য আগে
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </button>
+                                        
+                                        <button
+                                            className={`sort-option-item w-100 text-start p-3 ${filters.sort_by === 'newest' ? 'bg-primary text-white' : ''}`}
+                                            onClick={() => handleSortSelect('newest')}
+                                        >
+                                            <div className="d-flex align-items-center">
+                                                <i className="bi bi-clock me-3"></i>
+                                                <div>
+                                                    <div className="fw-semibold">নতুন আগে</div>
+                                                    <small className={filters.sort_by === 'newest' ? 'text-white' : 'text-muted'}>
+                                                        সর্বশেষ যোগকৃত পণ্য আগে
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="p-2 border-top bg-light">
+                                        <button 
+                                            className="btn btn-sm btn-outline-secondary w-100"
+                                            onClick={() => setShowSortDropdown(false)}
+                                        >
+                                            <i className="bi bi-x me-1"></i>
+                                            বন্ধ করুন
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -351,6 +441,101 @@ const SearchResults = () => {
                     ))}
                 </div>
             </div>
+            
+            {/* ✅ CSS স্টাইলস */}
+            <style jsx>{`
+                .search-header {
+                    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                    padding: 20px;
+                    border-radius: 10px;
+                }
+                
+                .product-card {
+                    transition: all 0.3s ease;
+                }
+                
+                .product-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+                }
+                
+                /* ✅ কাস্টম সর্ট ড্রপডাউন স্টাইল */
+                .sort-dropdown-menu {
+                    animation: fadeIn 0.2s ease;
+                    max-height: 400px;
+                    overflow-y: auto;
+                }
+                
+                .sort-option-item {
+                    transition: all 0.2s ease;
+                    background: none;
+                    border: none;
+                    text-align: left;
+                }
+                
+                .sort-option-item:hover {
+                    background-color: #f8f9fa !important;
+                    color: #000 !important;
+                }
+                
+                .sort-option-item.bg-primary:hover {
+                    background-color: #0b5ed7 !important;
+                    color: #fff !important;
+                }
+                
+                @keyframes fadeIn {
+                    from { 
+                        opacity: 0; 
+                        transform: translateY(-10px); 
+                    }
+                    to { 
+                        opacity: 1; 
+                        transform: translateY(0); 
+                    }
+                }
+                
+                /* ✅ মোবাইল রেসপন্সিভ স্টাইল */
+                @media (max-width: 768px) {
+                    .sort-dropdown-menu {
+                        position: fixed !important;
+                        top: 50% !important;
+                        left: 50% !important;
+                        transform: translate(-50%, -50%) !important;
+                        width: 90% !important;
+                        max-width: 400px !important;
+                        max-height: 70vh !important;
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+                    }
+                    
+                    .sort-option-item {
+                        padding: 15px !important;
+                    }
+                    
+                    .search-header .row {
+                        flex-direction: column;
+                    }
+                    
+                    .search-header .col-md-4 {
+                        margin-top: 10px;
+                        width: 100%;
+                    }
+                    
+                    .search-header .col-md-8 {
+                        width: 100%;
+                    }
+                }
+                
+                @media (max-width: 576px) {
+                    .sort-option-item {
+                        padding: 12px !important;
+                        font-size: 0.9rem;
+                    }
+                    
+                    .sort-option-item small {
+                        font-size: 0.8rem;
+                    }
+                }
+            `}</style>
         </div>
     );
 };
