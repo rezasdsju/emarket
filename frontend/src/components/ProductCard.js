@@ -22,35 +22,6 @@ const ProductCard = ({ product }) => {
     
     const imageUrl = getImageUrl();
     
-    // Calculate discount percentage
-    const getDiscountPercentage = () => {
-        if (product.has_discount && product.discount_price && product.price > 0) {
-            const discount = ((product.price - product.discount_price) / product.price) * 100;
-            return Math.round(discount);
-        }
-        return 0;
-    };
-    
-    // Get final price
-    const getFinalPrice = () => {
-        return product.has_discount ? product.discount_price : product.price;
-    };
-    
-    // Check if discount is valid
-    const isDiscountValid = () => {
-        if (!product.has_discount || !product.discount_active) return false;
-        
-        const now = new Date();
-        if (product.discount_start_date && new Date(product.discount_start_date) > now) return false;
-        if (product.discount_end_date && new Date(product.discount_end_date) < now) return false;
-        
-        return true;
-    };
-    
-    const discountValid = isDiscountValid();
-    const discountPercentage = getDiscountPercentage();
-    const finalPrice = getFinalPrice();
-    
     return (
         <div className="card h-100 shadow-sm hover-shadow" style={{
             transition: 'transform 0.3s ease, box-shadow 0.3s ease',
@@ -89,15 +60,7 @@ const ProductCard = ({ product }) => {
                     </div>
                 )}
                 
-                {discountValid && discountPercentage > 0 && (
-                    <div className="position-absolute top-0 end-0 bg-danger text-white p-2" 
-                         style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>
-                        <i className="bi bi-tag-fill me-1"></i>
-                        {discountPercentage}% OFF
-                    </div>
-                )}
-                
-                {product.featured && !discountValid && (
+                {product.featured && (
                     <div className="position-absolute top-0 end-0 bg-warning text-dark p-2" 
                          style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>
                         <i className="bi bi-star-fill me-1"></i>
@@ -119,7 +82,7 @@ const ProductCard = ({ product }) => {
                     {product.name || 'পণ্যের নাম নেই'}
                 </h6>
                 
-                {/* পরিমাণ */}
+                {/* ✅ পরিমাণ দেখানো হয়েছে */}
                 <div className="quantity-unit mb-2">
                     <span className="badge bg-info text-dark">
                         <i className="bi bi-box me-1"></i>
@@ -127,31 +90,15 @@ const ProductCard = ({ product }) => {
                     </span>
                 </div>
                 
-                {/* দাম */}
                 <div className="price-section mb-2">
-                    {discountValid ? (
-                        <div>
-                            <div className="d-flex align-items-center">
-                                <h5 className="text-danger fw-bold mb-0 me-2">
-                                    ৳{finalPrice ? finalPrice.toLocaleString('bn-BD') : '0'}
-                                </h5>
-                                <span className="text-muted text-decoration-line-through" style={{ fontSize: '0.9rem' }}>
-                                    ৳{product.price ? product.price.toLocaleString('bn-BD') : '0'}
-                                </span>
-                            </div>
-                            <small className="text-success">
-                                <i className="bi bi-arrow-down me-1"></i>
-                                {discountPercentage}% ছাড়
-                            </small>
-                        </div>
-                    ) : (
-                        <h5 className="text-primary fw-bold mb-0">
-                            ৳{product.price ? product.price.toLocaleString('bn-BD') : '0'}
-                        </h5>
-                    )}
+                    <h5 className="text-primary fw-bold mb-0">
+                        ৳{product.price ? product.price.toLocaleString('bn-BD') : '0'}
+                    </h5>
+                    {/*
+                    <small className="text-muted">পরিমাণ প্রতি</small>
+                    */}
                 </div>
                 
-                {/* বিবরণ */}
                 <p className="card-text text-muted mb-3 flex-grow-1" style={{
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -201,7 +148,6 @@ const ProductCard = ({ product }) => {
                 </div>
             </div>
             
-            {/* Hover Effects */}
             <style jsx>{`
                 .hover-shadow:hover {
                     transform: translateY(-5px);
@@ -214,20 +160,6 @@ const ProductCard = ({ product }) => {
                 
                 .card:hover .card-img-top {
                     transform: scale(1.05);
-                }
-                
-                .discount-badge {
-                    position: absolute;
-                    top: 10px;
-                    right: 10px;
-                    background: linear-gradient(45deg, #ff4d4d, #ff3333);
-                    color: white;
-                    padding: 5px 10px;
-                    border-radius: 5px;
-                    font-weight: bold;
-                    font-size: 0.8rem;
-                    z-index: 1;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
                 }
             `}</style>
         </div>
