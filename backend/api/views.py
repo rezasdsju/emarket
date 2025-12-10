@@ -157,17 +157,21 @@ class PaymentViewSet(viewsets.ModelViewSet):
         print(f"Payment created: {transaction_id} for Order #{payment.order.id}")
 
 
-# ============================ SEARCH VIEWS ============================
+
+
+# ... existing code ...
+
 @api_view(['GET'])
 def search_products(request):
     """
-    উন্নত সার্চ ফিচার - ফুল-টেক্সট সার্চ
+    উন্নত সার্চ ফিচার - ডিসকাউন্ট ফিল্টার সহ
     """
     query = request.GET.get('q', '').strip()
     category_slug = request.GET.get('category', None)
     min_price = request.GET.get('min_price', None)
     max_price = request.GET.get('max_price', None)
     sort_by = request.GET.get('sort_by', 'relevance')
+    discount_only = request.GET.get('discount_only', 'false').lower() == 'true'
     
     if not query:
         return Response({
@@ -202,6 +206,13 @@ def search_products(request):
         except:
             pass
     
+    # ✅ ডিসকাউন্ট ফিল্টার
+    if discount_only:
+        products_qs = products_qs.filter(
+            discount_type__in=['percentage', 'fixed'],
+            discount_active=True
+        ).exclude(discount_type='none')
+    
     # মাল্টিপল ফিল্ডে সার্চ
     q_objects = Q()
     
@@ -226,7 +237,7 @@ def search_products(request):
     # ✅ প্রথমে ফিল্টার করুন
     products = products_qs.filter(q_objects).distinct()
     
-    # ✅ রিলেভেন্স স্কোরিং ফাংশন
+    # ✅ রিলেভেন্স স্কোরিং ফাংশন - ডিসকাউন্ট বোনাস যোগ
     def calculate_relevance(product, query, search_terms):
         score = 0
         
@@ -254,6 +265,10 @@ def search_products(request):
             if term.lower() in (product.category.name or '').lower():
                 score += 30
         
+        # ✅ ডিসকাউন্ট বোনাস
+        if product.is_discount_valid():
+            score += 30
+        
         # জনপ্রিয় পণ্যের বোনাস
         if product.featured:
             score += 10
@@ -264,14 +279,20 @@ def search_products(request):
         
         return score
     
-    # ✅ SERVER-SIDE SORTING: আগে প্রোডাক্ট লিস্ট তৈরি করুন
+    # ✅ SERVER-SIDE SORTING
     product_list = []
     for product in products:
         try:
             serializer = ProductSerializer(product, context={'request': request})
             product_data = serializer.data
+            
+            # Add calculated fields for sorting
             product_data['relevance_score'] = calculate_relevance(product, query, search_terms)
             product_data['created_timestamp'] = product.created.timestamp() if product.created else 0
+            product_data['final_price_float'] = float(product.get_final_price())
+            product_data['has_discount_bool'] = product.is_discount_valid()
+            product_data['discount_percentage_float'] = float(product.get_discount_percentage())
+            
             product_list.append(product_data)
         except Exception as e:
             print(f"Error serializing product {product.id}: {e}")
@@ -279,11 +300,14 @@ def search_products(request):
     
     # ✅ এখন SERVER-এ সর্ট করুন
     if sort_by == 'price_asc':
-        product_list.sort(key=lambda x: float(x['price']) if x['price'] else 0)
+        product_list.sort(key=lambda x: x['final_price_float'])
     elif sort_by == 'price_desc':
-        product_list.sort(key=lambda x: float(x['price']) if x['price'] else 0, reverse=True)
+        product_list.sort(key=lambda x: x['final_price_float'], reverse=True)
     elif sort_by == 'newest':
         product_list.sort(key=lambda x: x['created_timestamp'], reverse=True)
+    elif sort_by == 'discount':
+        # Discount by percentage (highest first)
+        product_list.sort(key=lambda x: x['discount_percentage_float'], reverse=True)
     else:  # relevance (ডিফল্ট)
         product_list.sort(key=lambda x: x['relevance_score'], reverse=True)
     
@@ -306,11 +330,8 @@ def search_products(request):
     # ✅ ডিবাগ লগ
     print(f"🔍 Search Query: {query}")
     print(f"🔍 Sort By: {sort_by}")
+    print(f"🔍 Discount Only: {discount_only}")
     print(f"🔍 Total Products: {total_items}")
-    print(f"🔍 First 3 products after sort ({sort_by}):")
-    if paginated_products and len(paginated_products) > 0:
-        for i, p in enumerate(paginated_products[:3]):
-            print(f"   {i+1}. {p['name']} - Price: ৳{p['price']}")
     
     return Response({
         'success': True,
@@ -319,6 +340,7 @@ def search_products(request):
         'total_pages': total_pages,
         'current_page': page,
         'sort_by': sort_by,
+        'discount_only': discount_only,
         'products': paginated_products,
         'filters': {
             'category': category_slug,
@@ -326,6 +348,11 @@ def search_products(request):
             'max_price': max_price
         }
     })
+
+# ... existing code ...
+
+
+
 
 
 @api_view(['GET'])
