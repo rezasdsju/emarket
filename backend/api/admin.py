@@ -91,6 +91,9 @@ class ProductAdmin(admin.ModelAdmin):
         'stock',
         'available',
         'featured',
+        'discount_active',
+        'discount_type',
+        'discount_value',
         'created_short',
     )
     
@@ -151,12 +154,12 @@ class ProductAdmin(admin.ModelAdmin):
     def activate_discounts(self, request, queryset):
         updated = queryset.update(discount_active=True)
         self.message_user(request, f'{updated} products discount activated.')
-    activate_discounts.short_description = "Activate discount for selected products"
+    activate_discounts.short_description = "Activate discount"
     
     def deactivate_discounts(self, request, queryset):
         updated = queryset.update(discount_active=False)
         self.message_user(request, f'{updated} products discount deactivated.')
-    deactivate_discounts.short_description = "Deactivate discount for selected products"
+    deactivate_discounts.short_description = "Deactivate discount"
     
     def apply_percentage_discount(self, request, queryset):
         """Apply 10% discount to selected products"""
@@ -171,17 +174,17 @@ class ProductAdmin(admin.ModelAdmin):
                     product.discount_price = product.price - discount_amount
                 product.save()
         self.message_user(request, f'Applied 10% discount to {queryset.count()} products.')
-    apply_percentage_discount.short_description = "Apply 10% discount to selected products"
+    apply_percentage_discount.short_description = "Apply 10% discount"
     
     def make_available(self, request, queryset):
         updated = queryset.update(available=True)
         self.message_user(request, f'{updated} products marked as available.')
-    make_available.short_description = "Mark selected as available"
+    make_available.short_description = "Mark as available"
     
     def make_unavailable(self, request, queryset):
         updated = queryset.update(available=False)
         self.message_user(request, f'{updated} products marked as unavailable.')
-    make_unavailable.short_description = "Mark selected as unavailable"
+    make_unavailable.short_description = "Mark as unavailable"
     
     # Custom methods for display
     def image_preview_small(self, obj):
