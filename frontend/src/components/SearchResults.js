@@ -24,6 +24,7 @@ const SearchResults = () => {
     const page = new URLSearchParams(location.search).get('page') || 1;
     const API_BASE_URL = 'https://organic.satbeta.top';
     
+    // ✅ useEffect - প্রথম লোডিং এবং সর্ট পরিবর্তনে
     useEffect(() => {
         if (query) {
             performSearch();
@@ -32,7 +33,7 @@ const SearchResults = () => {
         }
     }, [query, page, filters.sort_by]);
     
-    // ✅ ড্রপডাউন বাইরে ক্লিক করলে বন্ধ করার জন্য
+    // ✅ useEffect - ড্রপডাউন বাইরে ক্লিক করলে বন্ধ করার জন্য
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target)) {
@@ -44,6 +45,15 @@ const SearchResults = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
     
+    // ✅ useEffect - location state থেকে ডেটা লোড
+    useEffect(() => {
+        if (location.state?.searchData) {
+            setSearchData(location.state.searchData);
+            setLoading(false);
+        }
+    }, [location.state]);
+    
+    // ✅ সার্চ ফাংশন
     const performSearch = async () => {
         setLoading(true);
         setError(null);
@@ -61,36 +71,103 @@ const SearchResults = () => {
                 apiUrl += '&' + params.join('&');
             }
             
-            console.log('Search API URL:', apiUrl);
+            console.log('🔍 Search API URL:', apiUrl);
             
             const response = await axios.get(apiUrl, {
                 headers: { 'Accept': 'application/json' },
                 timeout: 10000
             });
             
+            console.log('✅ Search response received:', {
+                success: response.data.success,
+                total_results: response.data.total_results,
+                sort_by: response.data.sort_by
+            });
+            
             setSearchData(response.data);
             
         } catch (err) {
-            console.error('Search error:', err);
+            console.error('❌ Search error:', err);
             setError('সার্চ করতে সমস্যা হয়েছে।');
+            
+            // ✅ Fallback: যদি API ব্যর্থ হয়, স্থানীয় সর্টিং প্রয়োগ
+            if (searchData && searchData.products) {
+                console.log('🔄 Applying local sorting as fallback');
+                const locallySorted = applyLocalSorting(searchData.products, filters.sort_by);
+                setSearchData({
+                    ...searchData,
+                    products: locallySorted,
+                    sort_by: filters.sort_by
+                });
+            }
         } finally {
             setLoading(false);
         }
     };
     
+    // ✅ স্থানীয় সর্টিং ফাংশন (API ব্যর্থ হলে ব্যাকআপ)
+    const applyLocalSorting = (productsArray, sortType) => {
+        const sorted = [...productsArray];
+        
+        switch(sortType) {
+            case 'price_asc':
+                return sorted.sort((a, b) => {
+                    const priceA = parseFloat(a.price) || 0;
+                    const priceB = parseFloat(b.price) || 0;
+                    return priceA - priceB;
+                });
+            case 'price_desc':
+                return sorted.sort((a, b) => {
+                    const priceA = parseFloat(a.price) || 0;
+                    const priceB = parseFloat(b.price) || 0;
+                    return priceB - priceA;
+                });
+            case 'newest':
+                return sorted.sort((a, b) => {
+                    const dateA = new Date(a.created || a.created_at || 0);
+                    const dateB = new Date(b.created || b.created_at || 0);
+                    return dateB - dateA;
+                });
+            case 'relevance':
+            default:
+                // রিলেভেন্সের জন্য বিশেষ সর্টিং
+                if (searchData?.relevance_scores) {
+                    return sorted.sort((a, b) => {
+                        const scoreA = searchData.relevance_scores[a.id] || 0;
+                        const scoreB = searchData.relevance_scores[b.id] || 0;
+                        return scoreB - scoreA;
+                    });
+                }
+                return sorted;
+        }
+    };
+    
+    // ✅ ফিল্টার পরিবর্তন হ্যান্ডলার
     const handleFilterChange = (key, value) => {
+        console.log(`🔄 Changing filter ${key} to:`, value);
         setFilters(prev => ({
             ...prev,
             [key]: value
         }));
-        setShowSortDropdown(false); // ✅ সর্ট নির্বাচন করলে ড্রপডাউন বন্ধ হবে
+        setShowSortDropdown(false);
+        
+        // ✅ URL আপডেট (optional)
+        const searchParams = new URLSearchParams(location.search);
+        if (key === 'sort_by' && value !== 'relevance') {
+            searchParams.set('sort_by', value);
+            navigate(`?${searchParams.toString()}`, { replace: true });
+        }
     };
     
+    // ✅ সর্ট নির্বাচন হ্যান্ডলার
     const handleSortSelect = (sortValue) => {
+        console.log(`🎯 Selected sort: ${sortValue}`);
         handleFilterChange('sort_by', sortValue);
     };
     
+    // ✅ ফিল্টার রিসেট
     const clearFilters = () => {
+        console.log('🗑️ Clearing all filters');
         setFilters({
             category: '',
             min_price: '',
@@ -98,15 +175,12 @@ const SearchResults = () => {
             sort_by: 'relevance'
         });
         setShowSortDropdown(false);
+        
+        // ✅ URL রিসেট
+        const searchParams = new URLSearchParams(location.search);
+        searchParams.delete('sort_by');
+        navigate(`?${searchParams.toString()}`, { replace: true });
     };
-    
-    // যদি state থেকে ডাটা থাকে
-    useEffect(() => {
-        if (location.state?.searchData) {
-            setSearchData(location.state.searchData);
-            setLoading(false);
-        }
-    }, [location.state]);
     
     // ✅ সর্ট অপশনের লেবেল ফাংশন
     const getSortLabel = (sortValue) => {
@@ -119,6 +193,31 @@ const SearchResults = () => {
         }
     };
     
+    // ✅ ডিবাগ ফাংশন - পণ্যের দাম প্রিন্ট করার জন্য
+    const debugProductPrices = (products) => {
+        if (!products || !Array.isArray(products)) return;
+        
+        console.log('💰 Product prices for debugging:');
+        products.forEach((product, index) => {
+            console.log(`${index + 1}. ${product.name}: ৳${product.price} (Type: ${typeof product.price})`);
+        });
+        
+        // সর্টিং টেস্ট
+        if (products.length > 0) {
+            const sortedByPrice = [...products].sort((a, b) => {
+                const priceA = parseFloat(a.price) || 0;
+                const priceB = parseFloat(b.price) || 0;
+                return priceA - priceB;
+            });
+            
+            console.log('📊 After local price_asc sorting:');
+            sortedByPrice.slice(0, 3).forEach((product, index) => {
+                console.log(`${index + 1}. ${product.name}: ৳${product.price}`);
+            });
+        }
+    };
+    
+    // লোডিং স্টেট
     if (loading) {
         return (
             <div className="container mt-5 text-center py-5">
@@ -132,6 +231,7 @@ const SearchResults = () => {
         );
     }
     
+    // এরর স্টেট
     if (error) {
         return (
             <div className="container mt-5">
@@ -158,6 +258,11 @@ const SearchResults = () => {
     }
     
     const { products, total_results, total_pages, current_page, sort_by } = searchData;
+    
+    // ✅ ডিবাগ: পণ্যের দাম দেখুন
+    if (products && products.length > 0) {
+        debugProductPrices(products);
+    }
     
     return (
         <div className="search-results-page container mt-4">
@@ -193,6 +298,7 @@ const SearchResults = () => {
                                 onClick={() => setShowSortDropdown(!showSortDropdown)}
                                 aria-expanded={showSortDropdown}
                                 aria-label="সর্ট অপশন"
+                                id="sortDropdownButton"
                             >
                                 <span>
                                     <i className="bi bi-sort-down me-1"></i>
@@ -204,7 +310,8 @@ const SearchResults = () => {
                             {/* ✅ কাস্টম ড্রপডাউন মেনু */}
                             {showSortDropdown && (
                                 <div className="sort-dropdown-menu shadow-lg border rounded bg-white mt-1 position-absolute w-100"
-                                     style={{ zIndex: 1050 }}>
+                                     style={{ zIndex: 1050 }}
+                                     aria-labelledby="sortDropdownButton">
                                     <div className="sort-option-header p-2 border-bottom bg-light">
                                         <small className="text-muted">
                                             <i className="bi bi-filter me-1"></i>
@@ -216,6 +323,7 @@ const SearchResults = () => {
                                         <button
                                             className={`sort-option-item w-100 text-start p-3 border-bottom ${filters.sort_by === 'relevance' ? 'bg-primary text-white' : ''}`}
                                             onClick={() => handleSortSelect('relevance')}
+                                            aria-label="রিলেভেন্স অনুযায়ী সর্ট করুন"
                                         >
                                             <div className="d-flex align-items-center">
                                                 <i className="bi bi-star me-3"></i>
@@ -231,6 +339,7 @@ const SearchResults = () => {
                                         <button
                                             className={`sort-option-item w-100 text-start p-3 border-bottom ${filters.sort_by === 'price_asc' ? 'bg-primary text-white' : ''}`}
                                             onClick={() => handleSortSelect('price_asc')}
+                                            aria-label="দাম: কম থেকে বেশি সর্ট করুন"
                                         >
                                             <div className="d-flex align-items-center">
                                                 <i className="bi bi-sort-numeric-up me-3"></i>
@@ -246,6 +355,7 @@ const SearchResults = () => {
                                         <button
                                             className={`sort-option-item w-100 text-start p-3 border-bottom ${filters.sort_by === 'price_desc' ? 'bg-primary text-white' : ''}`}
                                             onClick={() => handleSortSelect('price_desc')}
+                                            aria-label="দাম: বেশি থেকে কম সর্ট করুন"
                                         >
                                             <div className="d-flex align-items-center">
                                                 <i className="bi bi-sort-numeric-down me-3"></i>
@@ -261,6 +371,7 @@ const SearchResults = () => {
                                         <button
                                             className={`sort-option-item w-100 text-start p-3 ${filters.sort_by === 'newest' ? 'bg-primary text-white' : ''}`}
                                             onClick={() => handleSortSelect('newest')}
+                                            aria-label="নতুন পণ্য আগে সর্ট করুন"
                                         >
                                             <div className="d-flex align-items-center">
                                                 <i className="bi bi-clock me-3"></i>
@@ -278,6 +389,7 @@ const SearchResults = () => {
                                         <button 
                                             className="btn btn-sm btn-outline-secondary w-100"
                                             onClick={() => setShowSortDropdown(false)}
+                                            aria-label="সর্ট অপশন বন্ধ করুন"
                                         >
                                             <i className="bi bi-x me-1"></i>
                                             বন্ধ করুন
@@ -313,6 +425,7 @@ const SearchResults = () => {
                                             placeholder="সর্বনিম্ন"
                                             value={filters.min_price}
                                             onChange={(e) => handleFilterChange('min_price', e.target.value)}
+                                            aria-label="সর্বনিম্ন দাম"
                                         />
                                     </div>
                                     <div className="col-6">
@@ -322,6 +435,7 @@ const SearchResults = () => {
                                             placeholder="সর্বোচ্চ"
                                             value={filters.max_price}
                                             onChange={(e) => handleFilterChange('max_price', e.target.value)}
+                                            aria-label="সর্বোচ্চ দাম"
                                         />
                                     </div>
                                 </div>
@@ -332,11 +446,43 @@ const SearchResults = () => {
                                 <button 
                                     className="btn btn-outline-secondary w-100 mt-3"
                                     onClick={clearFilters}
+                                    aria-label="সব ফিল্টার ক্লিয়ার করুন"
                                 >
                                     <i className="bi bi-x-circle me-1"></i>
                                     সব ফিল্টার ক্লিয়ার করুন
                                 </button>
                             )}
+                            
+                            {/* ✅ ডিবাগ ইনফো */}
+                            <div className="mt-3 pt-3 border-top">
+                                <details className="small">
+                                    <summary className="text-muted">ডিবাগ তথ্য</summary>
+                                    <div className="mt-2">
+                                        <p className="mb-1">
+                                            <strong>বর্তমান সর্ট:</strong> {filters.sort_by}
+                                        </p>
+                                        <p className="mb-1">
+                                            <strong>URL সর্ট:</strong> {sort_by}
+                                        </p>
+                                        <p className="mb-1">
+                                            <strong>পণ্য সংখ্যা:</strong> {products?.length || 0}
+                                        </p>
+                                        <button 
+                                            className="btn btn-sm btn-outline-info w-100 mt-2"
+                                            onClick={() => {
+                                                console.log('🔍 Current search state:', {
+                                                    filters,
+                                                    searchData,
+                                                    query,
+                                                    page
+                                                });
+                                            }}
+                                        >
+                                            কনসোলে স্টেট দেখুন
+                                        </button>
+                                    </div>
+                                </details>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -374,6 +520,24 @@ const SearchResults = () => {
                         </div>
                     ) : (
                         <>
+                            {/* ✅ সর্টিং স্ট্যাটাস বার */}
+                            <div className="alert alert-info mb-4">
+                                <div className="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i className="bi bi-info-circle me-2"></i>
+                                        <strong>বর্তমান সর্ট:</strong> {getSortLabel(sort_by)}
+                                        {sort_by !== filters.sort_by && (
+                                            <span className="text-warning ms-2">
+                                                (সার্ভার সর্ট: {getSortLabel(sort_by)}, লোকাল সর্ট: {getSortLabel(filters.sort_by)})
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="text-muted small">
+                                        পণ্য {products.length} টি
+                                    </div>
+                                </div>
+                            </div>
+                            
                             {/* পণ্য গ্রিড */}
                             <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
                                 {products.map(product => (
@@ -385,12 +549,13 @@ const SearchResults = () => {
                             
                             {/* পেজিনেশন */}
                             {total_pages > 1 && (
-                                <nav className="mt-5">
+                                <nav className="mt-5" aria-label="পৃষ্ঠা নেভিগেশন">
                                     <ul className="pagination justify-content-center">
                                         <li className={`page-item ${current_page <= 1 ? 'disabled' : ''}`}>
                                             <button 
                                                 className="page-link"
                                                 onClick={() => navigate(`/search?q=${query}&page=${current_page - 1}&sort_by=${filters.sort_by}`)}
+                                                aria-label="পূর্ববর্তী পৃষ্ঠা"
                                             >
                                                 <i className="bi bi-chevron-left"></i>
                                             </button>
@@ -403,6 +568,8 @@ const SearchResults = () => {
                                                     <button 
                                                         className="page-link"
                                                         onClick={() => navigate(`/search?q=${query}&page=${pageNum}&sort_by=${filters.sort_by}`)}
+                                                        aria-label={`পৃষ্ঠা ${pageNum}`}
+                                                        aria-current={current_page === pageNum ? 'page' : undefined}
                                                     >
                                                         {pageNum}
                                                     </button>
@@ -414,6 +581,7 @@ const SearchResults = () => {
                                             <button 
                                                 className="page-link"
                                                 onClick={() => navigate(`/search?q=${query}&page=${current_page + 1}&sort_by=${filters.sort_by}`)}
+                                                aria-label="পরবর্তী পৃষ্ঠা"
                                             >
                                                 <i className="bi bi-chevron-right"></i>
                                             </button>
@@ -435,6 +603,7 @@ const SearchResults = () => {
                             key={term}
                             className="btn btn-outline-secondary"
                             onClick={() => navigate(`/search?q=${encodeURIComponent(term)}`)}
+                            aria-label={`${term} সার্চ করুন`}
                         >
                             {term}
                         </button>
@@ -471,6 +640,7 @@ const SearchResults = () => {
                     background: none;
                     border: none;
                     text-align: left;
+                    cursor: pointer;
                 }
                 
                 .sort-option-item:hover {
@@ -481,6 +651,11 @@ const SearchResults = () => {
                 .sort-option-item.bg-primary:hover {
                     background-color: #0b5ed7 !important;
                     color: #fff !important;
+                }
+                
+                .sort-option-item:focus {
+                    outline: 2px solid #0d6efd;
+                    outline-offset: -2px;
                 }
                 
                 @keyframes fadeIn {
