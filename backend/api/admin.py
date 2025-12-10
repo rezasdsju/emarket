@@ -4,9 +4,7 @@ from django.contrib.auth.models import User
 from .models import Category, Product, Order, OrderItem, Payment
 from django.utils.html import format_html
 from django.utils import timezone
-from django.db.models import Sum, Count, F
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 import logging
 
 logger = logging.getLogger(__name__)
@@ -32,7 +30,11 @@ def apply_10_percent_discount(modeladmin, request, queryset):
             product.discount_type = 'percentage'
             product.discount_value = 10
             product.discount_active = True
-            product.save()  # Assuming save() calls calculate_discount_price
+            # Calculate discount price
+            if product.discount_type == 'percentage':
+                discount_amount = product.price * (product.discount_value / 100)
+                product.discount_price = product.price - discount_amount
+            product.save()
             updated_count += 1
     modeladmin.message_user(request, f"Applied 10% discount to {updated_count} products.")
 apply_10_percent_discount.short_description = "Apply 10% discount"
@@ -57,7 +59,6 @@ class PaymentAdmin(admin.ModelAdmin):
     search_fields = ('transaction_id', 'order__name', 'mobile_number')
     date_hierarchy = 'created'
     ordering = ('-created',)
-    readonly_fields = ('created', 'updated')
     
     fieldsets = (
         ('Basic Information', {
@@ -68,9 +69,6 @@ class PaymentAdmin(admin.ModelAdmin):
         }),
         ('Customer Info', {
             'fields': ('mobile_number', 'email')
-        }),
-        ('Timestamps', {
-            'fields': ('created', 'updated')
         }),
     )
     
@@ -88,11 +86,9 @@ class PaymentAdmin(admin.ModelAdmin):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug', 'product_count', 'active_product_count', 'total_stock')
+    list_display = ('name', 'slug', 'product_count', 'active_product_count')
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name',)
-    list_filter = ('created',)
-    readonly_fields = ('created', 'updated')
     
     def product_count(self, obj):
         count = obj.products.count()
@@ -105,11 +101,6 @@ class CategoryAdmin(admin.ModelAdmin):
         url = reverse("admin:api_product_changelist") + f"?category__id__exact={obj.id}&available__exact=1"
         return format_html('<a href="{}">{}</a>', url, count)
     active_product_count.short_description = 'Active Products'
-    
-    def total_stock(self, obj):
-        total = obj.products.aggregate(total=Sum('stock'))['total'] or 0
-        return f"{total}"
-    total_stock.short_description = 'Total Stock'
 
 
 class OrderItemInline(admin.TabularInline):
@@ -117,8 +108,6 @@ class OrderItemInline(admin.TabularInline):
     raw_id_fields = ('product',)
     extra = 0
     readonly_fields = ('item_total',)
-    
-    fields = ('product', 'quantity', 'price', 'item_total')
     
     def item_total(self, obj):
         if obj.product and obj.quantity:
@@ -137,16 +126,15 @@ class ProductAdmin(admin.ModelAdmin):
         'discount_display',
         'final_price',
         'quantity_unit',
-        'stock_status', 
-        'available_display',
-        'featured_display',
+        'stock',
+        'available',
+        'featured',
         'created_short',
     )
     
     list_filter = (
         'available', 
         'featured', 
-        'created', 
         'category', 
         'discount_active',
         'discount_type',
@@ -182,10 +170,9 @@ class ProductAdmin(admin.ModelAdmin):
         }),
         ('Image', {
             'fields': ('image', 'image_preview_large'),
-            'classes': ('wide',)
         }),
         ('Price & Quantity', {
-            'fields': ('price', 'quantity_unit', 'stock')
+            'fields': ('price', 'quantity_unit', 'stock', 'discount_price')
         }),
         ('Discount Settings', {
             'fields': (
@@ -198,11 +185,11 @@ class ProductAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
         ('Status', {
-            'fields': ('available', 'featured', 'created', 'updated')
+            'fields': ('available', 'featured')
         }),
     )
     
-    readonly_fields = ('image_preview_large', 'created', 'updated')
+    readonly_fields = ('image_preview_large', 'discount_price')
     
     # Custom methods for display
     def image_preview_small(self, obj):
@@ -217,7 +204,6 @@ class ProductAdmin(admin.ModelAdmin):
             'border-radius: 4px; color: #999;">No Image</div>'
         )
     image_preview_small.short_description = 'Image'
-    image_preview_small.allow_tags = True
     
     def image_preview_large(self, obj):
         if obj.image:
@@ -248,72 +234,17 @@ class ProductAdmin(admin.ModelAdmin):
     discount_display.short_description = 'Discount'
     
     def final_price(self, obj):
-        # Assuming you have a method to calculate final price or field
-        try:
-            if hasattr(obj, 'discount_price') and obj.discount_price:
-                return format_html(
-                    '<span style="color: #f44336; font-weight: bold;">৳{}</span>',
-                    obj.discount_price
-                )
-            else:
-                return format_html('<span>৳{}</span>', obj.price)
-        except Exception as e:
-            logger.error(f"Error calculating final price for product {obj.id}: {e}")
-            return format_html('<span>৳{}</span>', obj.price)
+        if obj.discount_price and obj.discount_price < obj.price:
+            return format_html(
+                '<span style="color: #f44336; font-weight: bold;">৳{}</span>',
+                obj.discount_price
+            )
+        return format_html('<span>৳{}</span>', obj.price)
     final_price.short_description = 'Final Price'
-    
-    def stock_status(self, obj):
-        if obj.stock > 10:
-            color = '#4caf50'
-            text = f'{obj.stock}'
-        elif obj.stock > 0:
-            color = '#ff9800'
-            text = f'{obj.stock} (Low)'
-        else:
-            color = '#f44336'
-            text = 'Out of Stock'
-        
-        return format_html(
-            '<span style="color: {}; font-weight: bold;">{}</span>',
-            color, text
-        )
-    stock_status.short_description = 'Stock'
-    
-    def available_display(self, obj):
-        if obj.available:
-            return format_html(
-                '<span style="color: #4caf50; font-weight: bold;">✓ Available</span>'
-            )
-        return format_html(
-            '<span style="color: #f44336;">✗ Unavailable</span>'
-        )
-    available_display.short_description = 'Status'
-    
-    def featured_display(self, obj):
-        if obj.featured:
-            return format_html(
-                '<span style="color: #ff9800; font-weight: bold;">★ Featured</span>'
-            )
-        return format_html('<span style="color: #999;">-</span>')
-    featured_display.short_description = 'Featured'
     
     def created_short(self, obj):
         return obj.created.strftime('%b %d, %Y')
     created_short.short_description = 'Created'
-    
-    # Custom save method if needed
-    def save_model(self, request, obj, form, change):
-        # Calculate discount price before saving if needed
-        if obj.discount_active and obj.discount_type != 'none':
-            if obj.discount_type == 'percentage':
-                discount_amount = obj.price * (obj.discount_value / 100)
-                obj.discount_price = obj.price - discount_amount
-            elif obj.discount_type == 'fixed':
-                obj.discount_price = max(0, obj.price - obj.discount_value)
-        else:
-            obj.discount_price = obj.price
-        
-        super().save_model(request, obj, form, change)
 
 
 @admin.register(Order)
@@ -325,14 +256,12 @@ class OrderAdmin(admin.ModelAdmin):
         'total_price_display',
         'discount_display',
         'payment_status',
-        'order_status',
         'created_date',
     )
     
     list_filter = (
         'paid', 
         'created',
-        'status',
     )
     
     search_fields = (
@@ -355,14 +284,9 @@ class OrderAdmin(admin.ModelAdmin):
             'fields': ('total_price', 'discount_applied', 'notes')
         }),
         ('Status', {
-            'fields': ('paid', 'status')
-        }),
-        ('Timestamps', {
-            'fields': ('created', 'updated')
+            'fields': ('paid',)
         }),
     )
-    
-    readonly_fields = ('created', 'updated')
     
     def order_id_display(self, obj):
         return format_html(
@@ -421,21 +345,6 @@ class OrderAdmin(admin.ModelAdmin):
         )
     payment_status.short_description = 'Payment'
     
-    def order_status(self, obj):
-        status_colors = {
-            'pending': '#ff9800',
-            'processing': '#2196f3',
-            'completed': '#4caf50',
-            'cancelled': '#f44336',
-        }
-        color = status_colors.get(obj.status, '#999')
-        return format_html(
-            '<span style="color: {}; font-weight: bold;">{}</span>',
-            color,
-            obj.status.capitalize()
-        )
-    order_status.short_description = 'Status'
-    
     def created_date(self, obj):
         return obj.created.strftime('%b %d, %Y %I:%M %p')
     created_date.short_description = 'Order Date'
@@ -470,14 +379,16 @@ class UserAdmin(BaseUserAdmin):
     
     ordering = ('-date_joined',)
     
-    fieldsets = BaseUserAdmin.fieldsets + (
-        ('Additional Info', {
-            'fields': ('date_joined', 'last_login'),
-            'classes': ('collapse',),
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'email')}),
+        ('Permissions', {
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
         }),
+        ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
     
-    readonly_fields = ('date_joined', 'last_login')
+    readonly_fields = ('last_login', 'date_joined')
     
     def date_joined_short(self, obj):
         return obj.date_joined.strftime('%b %d, %Y')
