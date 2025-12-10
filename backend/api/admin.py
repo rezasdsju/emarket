@@ -127,8 +127,11 @@ class ProductAdmin(admin.ModelAdmin):
         'final_price',
         'quantity_unit',
         'stock',
-        'available',
-        'featured',
+        'available_display',
+        'featured_display',
+        'discount_active_display',
+        'discount_type_display',
+        'discount_value_display',
         'created_short',
     )
     
@@ -143,11 +146,7 @@ class ProductAdmin(admin.ModelAdmin):
     
     list_editable = (
         'stock', 
-        'available', 
-        'featured',
-        'discount_active',
-        'discount_type',
-        'discount_value'
+        'quantity_unit',
     )
     
     prepopulated_fields = {'slug': ('name',)}
@@ -182,7 +181,6 @@ class ProductAdmin(admin.ModelAdmin):
                 'discount_start_date',
                 'discount_end_date',
             ),
-            'classes': ('collapse',),
         }),
         ('Status', {
             'fields': ('available', 'featured')
@@ -241,6 +239,26 @@ class ProductAdmin(admin.ModelAdmin):
             )
         return format_html('<span>৳{}</span>', obj.price)
     final_price.short_description = 'Final Price'
+    
+    def available_display(self, obj):
+        return obj.available
+    available_display.short_description = 'Available'
+    
+    def featured_display(self, obj):
+        return obj.featured
+    featured_display.short_description = 'Featured'
+    
+    def discount_active_display(self, obj):
+        return obj.discount_active
+    discount_active_display.short_description = 'Discount Active'
+    
+    def discount_type_display(self, obj):
+        return obj.discount_type
+    discount_type_display.short_description = 'Discount Type'
+    
+    def discount_value_display(self, obj):
+        return obj.discount_value
+    discount_value_display.short_description = 'Discount Value'
     
     def created_short(self, obj):
         return obj.created.strftime('%b %d, %Y')
