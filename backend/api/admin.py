@@ -10,48 +10,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-# Admin Action Functions
-def make_discount_active(modeladmin, request, queryset):
-    queryset.update(discount_active=True)
-    modeladmin.message_user(request, f"{queryset.count()} products marked as discount active.")
-make_discount_active.short_description = "Mark selected as discount active"
-
-
-def make_discount_inactive(modeladmin, request, queryset):
-    queryset.update(discount_active=False)
-    modeladmin.message_user(request, f"{queryset.count()} products marked as discount inactive.")
-make_discount_inactive.short_description = "Mark selected as discount inactive"
-
-
-def apply_10_percent_discount(modeladmin, request, queryset):
-    updated_count = 0
-    for product in queryset:
-        if product.discount_type == 'none':
-            product.discount_type = 'percentage'
-            product.discount_value = 10
-            product.discount_active = True
-            # Calculate discount price
-            if product.discount_type == 'percentage':
-                discount_amount = product.price * (product.discount_value / 100)
-                product.discount_price = product.price - discount_amount
-            product.save()
-            updated_count += 1
-    modeladmin.message_user(request, f"Applied 10% discount to {updated_count} products.")
-apply_10_percent_discount.short_description = "Apply 10% discount"
-
-
-def make_available(modeladmin, request, queryset):
-    queryset.update(available=True)
-    modeladmin.message_user(request, f"{queryset.count()} products marked as available.")
-make_available.short_description = "Mark selected as available"
-
-
-def make_unavailable(modeladmin, request, queryset):
-    queryset.update(available=False)
-    modeladmin.message_user(request, f"{queryset.count()} products marked as unavailable.")
-make_unavailable.short_description = "Mark selected as unavailable"
-
-
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
     list_display = ('transaction_id', 'order_link', 'amount_display', 'payment_method', 'status', 'created')
@@ -107,7 +65,11 @@ class OrderItemInline(admin.TabularInline):
     model = OrderItem
     raw_id_fields = ('product',)
     extra = 0
-    readonly_fields = ('item_total',)
+    
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ('item_total',)
+        return ()
     
     def item_total(self, obj):
         if obj.product and obj.quantity:
@@ -127,11 +89,8 @@ class ProductAdmin(admin.ModelAdmin):
         'final_price',
         'quantity_unit',
         'stock',
-        'available_display',
-        'featured_display',
-        'discount_active_display',
-        'discount_type_display',
-        'discount_value_display',
+        'available',
+        'featured',
         'created_short',
     )
     
@@ -146,6 +105,11 @@ class ProductAdmin(admin.ModelAdmin):
     
     list_editable = (
         'stock', 
+        'available', 
+        'featured',
+        'discount_active',
+        'discount_type',
+        'discount_value',
         'quantity_unit',
     )
     
@@ -154,14 +118,6 @@ class ProductAdmin(admin.ModelAdmin):
     raw_id_fields = ('category',)
     date_hierarchy = 'created'
     ordering = ('-created',)
-    
-    actions = [
-        make_available,
-        make_unavailable,
-        make_discount_active,
-        make_discount_inactive,
-        apply_10_percent_discount,
-    ]
     
     fieldsets = (
         ('Basic Information', {
@@ -188,6 +144,44 @@ class ProductAdmin(admin.ModelAdmin):
     )
     
     readonly_fields = ('image_preview_large', 'discount_price')
+    
+    # Bulk actions
+    actions = ['activate_discounts', 'deactivate_discounts', 'apply_percentage_discount', 'make_available', 'make_unavailable']
+    
+    def activate_discounts(self, request, queryset):
+        updated = queryset.update(discount_active=True)
+        self.message_user(request, f'{updated} products discount activated.')
+    activate_discounts.short_description = "Activate discount for selected products"
+    
+    def deactivate_discounts(self, request, queryset):
+        updated = queryset.update(discount_active=False)
+        self.message_user(request, f'{updated} products discount deactivated.')
+    deactivate_discounts.short_description = "Deactivate discount for selected products"
+    
+    def apply_percentage_discount(self, request, queryset):
+        """Apply 10% discount to selected products"""
+        for product in queryset:
+            if product.discount_type == 'none':
+                product.discount_type = 'percentage'
+                product.discount_value = 10
+                product.discount_active = True
+                # Calculate discount price
+                if product.discount_type == 'percentage':
+                    discount_amount = product.price * (product.discount_value / 100)
+                    product.discount_price = product.price - discount_amount
+                product.save()
+        self.message_user(request, f'Applied 10% discount to {queryset.count()} products.')
+    apply_percentage_discount.short_description = "Apply 10% discount to selected products"
+    
+    def make_available(self, request, queryset):
+        updated = queryset.update(available=True)
+        self.message_user(request, f'{updated} products marked as available.')
+    make_available.short_description = "Mark selected as available"
+    
+    def make_unavailable(self, request, queryset):
+        updated = queryset.update(available=False)
+        self.message_user(request, f'{updated} products marked as unavailable.')
+    make_unavailable.short_description = "Mark selected as unavailable"
     
     # Custom methods for display
     def image_preview_small(self, obj):
@@ -239,26 +233,6 @@ class ProductAdmin(admin.ModelAdmin):
             )
         return format_html('<span>৳{}</span>', obj.price)
     final_price.short_description = 'Final Price'
-    
-    def available_display(self, obj):
-        return obj.available
-    available_display.short_description = 'Available'
-    
-    def featured_display(self, obj):
-        return obj.featured
-    featured_display.short_description = 'Featured'
-    
-    def discount_active_display(self, obj):
-        return obj.discount_active
-    discount_active_display.short_description = 'Discount Active'
-    
-    def discount_type_display(self, obj):
-        return obj.discount_type
-    discount_type_display.short_description = 'Discount Type'
-    
-    def discount_value_display(self, obj):
-        return obj.discount_value
-    discount_value_display.short_description = 'Discount Value'
     
     def created_short(self, obj):
         return obj.created.strftime('%b %d, %Y')
