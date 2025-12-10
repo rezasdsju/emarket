@@ -72,11 +72,12 @@ const About = () => {
                                         <div className="d-flex align-items-start">
                                             <i className="bi bi-truck text-primary fs-4 me-3"></i>
                                             <div>
-                                                <h5>দ্রুত ডেলিভারি</h5>
-                                                <p className="text-muted">সারা দেশে ডেলিভারি সুবিধা</p>
+                                                <h5>সেবা ও বিশ্বস্ততা</h5>
+                                                <p className="text-muted">ন্যায্য দামে সেরা পণ্য </p>
                                             </div>
                                         </div>
                                     </div>
+                                    {/*
                                     <div className="col-md-4 mb-3">
                                         <div className="d-flex align-items-start">
                                             <i className="bi bi-arrow-repeat text-warning fs-4 me-3"></i>
@@ -86,6 +87,7 @@ const About = () => {
                                             </div>
                                         </div>
                                     </div>
+                                    */}
                                 </div>
                             </div>
                             
