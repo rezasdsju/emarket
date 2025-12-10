@@ -31,7 +31,7 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'quantity_unit', 'category', 'price', 'stock', 'available', 'featured', 'created')
+    list_display = ('name', 'quantity_unit', 'category', 'price', 'stock', 'available', 'featured', 'created', 'image_preview')
     list_filter = ('available', 'featured', 'created', 'category')
     list_editable = ('price', 'quantity_unit', 'stock', 'available', 'featured')
     prepopulated_fields = {'slug': ('name',)}
@@ -40,23 +40,34 @@ class ProductAdmin(admin.ModelAdmin):
     date_hierarchy = 'created'
     ordering = ('-created',)
     
-    # ✅ OPTION 2: ফিল্ডসেট ব্যবহার (সুন্দর লেআউট)
+    # ✅ Option 1: সব ফিল্ড একসাথে
+    fields = ('name', 'slug', 'category', 'image', 'price', 'quantity_unit', 
+              'description', 'stock', 'available', 'featured')
+    
+    # ✅ Option 2: ফিল্ডসেট ব্যবহার
+    """
     fieldsets = (
         ('Basic Information', {
             'fields': ('name', 'slug', 'category', 'description')
         }),
-        ('Price & Quantity', {
-            'fields': ('price', 'quantity_unit', 'stock'),
-            'description': 'Set the price and quantity information'
+        ('Image', {
+            'fields': ('image',)
         }),
-        ('Status & Features', {
+        ('Price & Quantity', {
+            'fields': ('price', 'quantity_unit', 'stock')
+        }),
+        ('Status', {
             'fields': ('available', 'featured')
         }),
-        ('Image', {
-            'fields': ('image',),
-            'classes': ('collapse',)  # Optional: collapse for image section
-        }),
     )
+    """
+    
+    # ✅ Optional: Image preview in list view
+    def image_preview(self, obj):
+        if obj.image:
+            return f'✅ Image Uploaded'
+        return '❌ No Image'
+    image_preview.short_description = 'Image Status'
 
 
 @admin.register(Order)
@@ -80,7 +91,7 @@ class UserAdmin(BaseUserAdmin):
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 
-# ✅ Admin site customization
-admin.site.site_header = "Organic Bazar Admin"
-admin.site.site_title = "Organic Bazar Admin Portal"
-admin.site.index_title = "Welcome to Organic Bazar Admin Panel"
+# ✅ Admin site customization (ঐচ্ছিক)
+admin.site.site_header = "Organic Bazar Admin Panel"
+admin.site.site_title = "Organic Bazar Admin"
+admin.site.index_title = "Welcome to Organic Bazar Admin"
