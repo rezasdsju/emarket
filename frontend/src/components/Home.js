@@ -682,6 +682,7 @@ const Home = () => {
                             ১০০% অথেন্টিক অর্গানিক পণ্য
                         </small>
                     </p>
+                    {/*
                     <div className="d-flex justify-content-center gap-3 mb-3">
                         <span className="text-success">
                             <i className="bi bi-truck"></i> ফ্রি হোম ডেলিভারি
@@ -693,6 +694,7 @@ const Home = () => {
                             <i className="bi bi-shield-check"></i> গ্যারান্টিযুক্ত
                         </span>
                     </div>
+                    */}
                     <button 
                         className="btn btn-outline-primary btn-sm"
                         onClick={fetchData}

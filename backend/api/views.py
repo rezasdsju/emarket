@@ -9,7 +9,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
 from django.db import models
 import uuid
-from operator import itemgetter
 
 from .models import Category, Product, Order, OrderItem, Payment
 from .serializers import (
@@ -39,7 +38,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['category', 'available', 'featured']
-    search_fields = ['name', 'description', 'quantity_unit']  # ✅ quantity_unit যোগ করা হয়েছে
+    search_fields = ['name', 'description', 'quantity_unit']
     ordering_fields = ['price', 'created', 'name']
     ordering = ['-created']
     parser_classes = [MultiPartParser, FormParser]
@@ -168,7 +167,7 @@ def search_products(request):
     category_slug = request.GET.get('category', None)
     min_price = request.GET.get('min_price', None)
     max_price = request.GET.get('max_price', None)
-    sort_by = request.GET.get('sort_by', 'relevance')  # ✅ নতুন: সর্টিং প্যারামিটার
+    sort_by = request.GET.get('sort_by', 'relevance')
     
     if not query:
         return Response({
@@ -211,7 +210,7 @@ def search_products(request):
             q_objects |= (
                 Q(name__icontains=term) |
                 Q(description__icontains=term) |
-                Q(quantity_unit__icontains=term) |  # ✅ পরিমাণ ফিল্ড যোগ করা হয়েছে
+                Q(quantity_unit__icontains=term) |
                 Q(category__name__icontains=term)
             )
     
@@ -224,18 +223,11 @@ def search_products(request):
             Q(category__name__icontains=query)
         )
     
-    # ✅ সর্টিং আগে ডাটাবেজ লেভেলে প্রয়োগ করুন
-    if sort_by == 'price_asc':
-        products = products_qs.filter(q_objects).distinct().order_by('price')
-    elif sort_by == 'price_desc':
-        products = products_qs.filter(q_objects).distinct().order_by('-price')
-    elif sort_by == 'newest':
-        products = products_qs.filter(q_objects).distinct().order_by('-created')
-    else:  # relevance (ডিফল্ট)
-        products = products_qs.filter(q_objects).distinct()
+    # ✅ প্রথমে ফিল্টার করুন
+    products = products_qs.filter(q_objects).distinct()
     
     # ✅ রিলেভেন্স স্কোরিং ফাংশন
-    def calculate_relevance(product, query):
+    def calculate_relevance(product, query, search_terms):
         score = 0
         
         # নামে এক্সাক্ট ম্যাচ
@@ -272,20 +264,27 @@ def search_products(request):
         
         return score
     
-    # প্রোডাক্ট লিস্ট তৈরি
+    # ✅ SERVER-SIDE SORTING: আগে প্রোডাক্ট লিস্ট তৈরি করুন
     product_list = []
     for product in products:
         try:
             serializer = ProductSerializer(product, context={'request': request})
             product_data = serializer.data
-            product_data['relevance_score'] = calculate_relevance(product, query)
+            product_data['relevance_score'] = calculate_relevance(product, query, search_terms)
+            product_data['created_timestamp'] = product.created.timestamp() if product.created else 0
             product_list.append(product_data)
         except Exception as e:
             print(f"Error serializing product {product.id}: {e}")
             continue
     
-    # ✅ শুধুমাত্র relevance সর্টের জন্য ক্লায়েন্ট সাইড সর্টিং
-    if sort_by == 'relevance':
+    # ✅ এখন SERVER-এ সর্ট করুন
+    if sort_by == 'price_asc':
+        product_list.sort(key=lambda x: float(x['price']) if x['price'] else 0)
+    elif sort_by == 'price_desc':
+        product_list.sort(key=lambda x: float(x['price']) if x['price'] else 0, reverse=True)
+    elif sort_by == 'newest':
+        product_list.sort(key=lambda x: x['created_timestamp'], reverse=True)
+    else:  # relevance (ডিফল্ট)
         product_list.sort(key=lambda x: x['relevance_score'], reverse=True)
     
     # পেজিনেশন
@@ -304,13 +303,22 @@ def search_products(request):
     
     paginated_products = product_list[start_index:end_index]
     
+    # ✅ ডিবাগ লগ
+    print(f"🔍 Search Query: {query}")
+    print(f"🔍 Sort By: {sort_by}")
+    print(f"🔍 Total Products: {total_items}")
+    print(f"🔍 First 3 products after sort ({sort_by}):")
+    if paginated_products and len(paginated_products) > 0:
+        for i, p in enumerate(paginated_products[:3]):
+            print(f"   {i+1}. {p['name']} - Price: ৳{p['price']}")
+    
     return Response({
         'success': True,
         'query': query,
         'total_results': total_items,
         'total_pages': total_pages,
         'current_page': page,
-        'sort_by': sort_by,  # ✅ রেসপন্সে সর্টিং তথ্য যুক্ত করা হয়েছে
+        'sort_by': sort_by,
         'products': paginated_products,
         'filters': {
             'category': category_slug,

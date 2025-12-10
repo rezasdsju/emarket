@@ -17,15 +17,12 @@ const SearchResults = () => {
     const query = queryParams.get('q') || '';
     const page = queryParams.get('page') || 1;
     const sortByFromUrl = queryParams.get('sort_by') || 'relevance';
-    const categoryFromUrl = queryParams.get('category') || '';
-    const minPriceFromUrl = queryParams.get('min_price') || '';
-    const maxPriceFromUrl = queryParams.get('max_price') || '';
     
-    // ফিল্টার স্টেট URL থেকে ইনিশিয়ালাইজ করুন
+    // ফিল্টার স্টেট
     const [filters, setFilters] = useState({
-        category: categoryFromUrl,
-        min_price: minPriceFromUrl,
-        max_price: maxPriceFromUrl,
+        category: '',
+        min_price: '',
+        max_price: '',
         sort_by: sortByFromUrl
     });
     
@@ -79,13 +76,13 @@ const SearchResults = () => {
             
             if (response.data.success) {
                 setSearchData(response.data);
-                console.log('✅ Search successful. Products:', response.data.products?.length);
+                console.log('✅ Search successful. Sort type:', response.data.sort_by);
                 
-                // ডিবাগ: সর্টিং যাচাই করুন
+                // সর্টিং ডিবাগ
                 if (response.data.products && response.data.products.length > 0) {
-                    console.log('💰 First 3 product prices:');
+                    console.log('💰 First 3 product prices after sorting:');
                     response.data.products.slice(0, 3).forEach((p, i) => {
-                        console.log(`${i+1}. ${p.name}: ৳${p.price} (Sort: ${sortToUse})`);
+                        console.log(`${i+1}. ${p.name}: ৳${p.price} (Sort: ${response.data.sort_by})`);
                     });
                 }
             } else {
@@ -109,43 +106,10 @@ const SearchResults = () => {
     
     // সর্ট পরিবর্তন হলে নতুন সার্চ করুন
     useEffect(() => {
-        // URL থেকে প্যারামিটার আপডেট
-        const params = new URLSearchParams(location.search);
-        
-        // সর্ট প্যারামিটার আপডেট
-        if (filters.sort_by && filters.sort_by !== 'relevance') {
-            params.set('sort_by', filters.sort_by);
-        } else {
-            params.delete('sort_by');
-        }
-        
-        // ফিল্টার প্যারামিটার আপডেট
-        if (filters.category) {
-            params.set('category', filters.category);
-        } else {
-            params.delete('category');
-        }
-        
-        if (filters.min_price) {
-            params.set('min_price', filters.min_price);
-        } else {
-            params.delete('min_price');
-        }
-        
-        if (filters.max_price) {
-            params.set('max_price', filters.max_price);
-        } else {
-            params.delete('max_price');
-        }
-        
-        // নতুন URL তৈরি
-        const newUrl = `?${params.toString()}`;
-        
-        // যদি URL পরিবর্তন হয়ে থাকে, তাহলে সার্চ করুন
-        if (newUrl !== `?${location.search}`) {
+        if (query) {
             performSearch(filters.sort_by);
         }
-    }, [filters.sort_by, filters.category, filters.min_price, filters.max_price]);
+    }, [filters.sort_by]);
     
     // ড্রপডাউন বাইরে ক্লিক করলে বন্ধ করার জন্য
     useEffect(() => {
@@ -172,15 +136,14 @@ const SearchResults = () => {
         // ড্রপডাউন বন্ধ করুন
         setShowSortDropdown(false);
         
-        // URL আপডেট করবে এবং useEffect ট্রিগার হবে
-    };
-    
-    // ফিল্টার পরিবর্তন হ্যান্ডলার
-    const handleFilterChange = (key, value) => {
-        setFilters(prev => ({
-            ...prev,
-            [key]: value
-        }));
+        // URL আপডেট করুন
+        const params = new URLSearchParams(location.search);
+        if (sortValue && sortValue !== 'relevance') {
+            params.set('sort_by', sortValue);
+        } else {
+            params.delete('sort_by');
+        }
+        navigate(`?${params.toString()}`);
     };
     
     // ফিল্টার রিসেট
@@ -197,14 +160,6 @@ const SearchResults = () => {
         const params = new URLSearchParams();
         params.set('q', query);
         navigate(`?${params.toString()}`, { replace: true });
-    };
-    
-    // পেজিনেশন হ্যান্ডলার
-    const handlePageChange = (newPage) => {
-        const params = new URLSearchParams(location.search);
-        params.set('page', newPage);
-        navigate(`?${params.toString()}`);
-        window.scrollTo(0, 0);
     };
     
     // লোডিং স্টেট
@@ -266,7 +221,8 @@ const SearchResults = () => {
                                     <strong>{total_results}</strong> টি পণ্য পাওয়া গেছে
                                 </div>
                                 <div className="text-muted small">
-                                    পৃষ্ঠা {current_page} / {total_pages}
+                                    পৃষ্ঠা {current_page} / {total_pages} | 
+                                    সর্ট: {getSortLabel(sort_by)}
                                 </div>
                             </div>
                         </div>
@@ -276,14 +232,14 @@ const SearchResults = () => {
                     <div className="col-md-4" ref={sortDropdownRef}>
                         <div className="position-relative">
                             <button 
-                                className="btn btn-outline-secondary w-100 d-flex justify-content-between align-items-center"
+                                className="btn btn-outline-primary w-100 d-flex justify-content-between align-items-center py-2"
                                 type="button"
                                 onClick={() => setShowSortDropdown(!showSortDropdown)}
                                 aria-expanded={showSortDropdown}
                             >
                                 <span>
-                                    <i className="bi bi-sort-down me-1"></i>
-                                    সর্ট: {getSortLabel(filters.sort_by)}
+                                    <i className="bi bi-sort-down me-2"></i>
+                                    {getSortLabel(filters.sort_by)}
                                 </span>
                                 <i className={`bi bi-chevron-${showSortDropdown ? 'up' : 'down'}`}></i>
                             </button>
@@ -291,13 +247,6 @@ const SearchResults = () => {
                             {showSortDropdown && (
                                 <div className="sort-dropdown-menu shadow-lg border rounded bg-white mt-1 position-absolute w-100"
                                      style={{ zIndex: 1050 }}>
-                                    
-                                    <div className="sort-option-header p-2 border-bottom bg-light">
-                                        <small className="text-muted">
-                                            <i className="bi bi-filter me-1"></i>
-                                            সর্ট অপশন নির্বাচন করুন
-                                        </small>
-                                    </div>
                                     
                                     <div className="sort-options">
                                         {[
@@ -314,7 +263,7 @@ const SearchResults = () => {
                                                 onClick={() => handleSortSelect(option.value)}
                                             >
                                                 <div className="d-flex align-items-center">
-                                                    <i className={`${option.icon} me-3`}></i>
+                                                    <i className={`${option.icon} me-3 fs-5`}></i>
                                                     <div>
                                                         <div className="fw-semibold">{option.label}</div>
                                                         <small className={filters.sort_by === option.value ? 'text-white' : 'text-muted'}>
@@ -327,64 +276,6 @@ const SearchResults = () => {
                                     </div>
                                 </div>
                             )}
-                        </div>
-                        
-                        {/* বর্তমান সর্ট স্ট্যাটাস */}
-                        <div className="mt-2 small text-center">
-                            <span className="badge bg-info">
-                                <i className="bi bi-check-circle me-1"></i>
-                                বর্তমান: {getSortLabel(sort_by || filters.sort_by)}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            {/* ফিল্টার সেকশন */}
-            <div className="row mb-4">
-                <div className="col-12">
-                    <div className="card border-0 shadow-sm">
-                        <div className="card-body">
-                            <div className="row g-3">
-                                <div className="col-md-4">
-                                    <label className="form-label fw-semibold">
-                                        <i className="bi bi-currency-dollar me-1"></i>
-                                        সর্বনিম্ন দাম
-                                    </label>
-                                    <input
-                                        type="number"
-                                        className="form-control"
-                                        placeholder="সর্বনিম্ন দাম"
-                                        value={filters.min_price}
-                                        onChange={(e) => handleFilterChange('min_price', e.target.value)}
-                                    />
-                                </div>
-                                
-                                <div className="col-md-4">
-                                    <label className="form-label fw-semibold">
-                                        <i className="bi bi-currency-dollar me-1"></i>
-                                        সর্বোচ্চ দাম
-                                    </label>
-                                    <input
-                                        type="number"
-                                        className="form-control"
-                                        placeholder="সর্বোচ্চ দাম"
-                                        value={filters.max_price}
-                                        onChange={(e) => handleFilterChange('max_price', e.target.value)}
-                                    />
-                                </div>
-                                
-                                <div className="col-md-4 d-flex align-items-end">
-                                    <button 
-                                        className="btn btn-outline-danger w-100"
-                                        onClick={clearFilters}
-                                        disabled={!filters.min_price && !filters.max_price && filters.sort_by === 'relevance'}
-                                    >
-                                        <i className="bi bi-x-circle me-1"></i>
-                                        ফিল্টার রিসেট
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -421,44 +312,30 @@ const SearchResults = () => {
                                 <p className="text-muted mb-4">
                                     "{query}" এর সাথে মিলে এমন কোনো পণ্য নেই।
                                 </p>
-                                <button 
-                                    className="btn btn-primary"
-                                    onClick={clearFilters}
-                                >
-                                    <i className="bi bi-arrow-clockwise me-1"></i>
-                                    ফিল্টার রিসেট করুন
-                                </button>
                             </div>
                         </div>
                     ) : (
                         <>
-                            {/* সর্টিং ভেরিফিকেশন (ডিবাগ) */}
-                            {process.env.NODE_ENV === 'development' && products.length > 1 && (
-                                <div className="alert alert-warning mb-3">
-                                    <details>
-                                        <summary className="fw-bold">সর্টিং ডিবাগ তথ্য</summary>
-                                        <div className="mt-2">
-                                            <p className="mb-1">
-                                                <strong>সর্ট টাইপ:</strong> {sort_by || filters.sort_by}
-                                            </p>
-                                            <p className="mb-1">
-                                                <strong>প্রথম ৩টি পণ্যের দাম:</strong>
-                                            </p>
-                                            <ul className="mb-1">
-                                                {products.slice(0, 3).map((p, i) => (
-                                                    <li key={i}>
-                                                        {i+1}. {p.name}: <strong>৳{p.price}</strong>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                            <button 
-                                                className="btn btn-sm btn-outline-info mt-1"
-                                                onClick={() => performSearch(filters.sort_by)}
-                                            >
-                                                API আবার কল করুন
-                                            </button>
+                            {/* সর্টিং যাচাইকারী (ডিবাগ) */}
+                            {products.length > 1 && (
+                                <div className="alert alert-light border mb-3">
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>সর্টিং যাচাই:</strong> বর্তমানে {getSortLabel(sort_by)} অনুযায়ী সর্ট করা হয়েছে
                                         </div>
-                                    </details>
+                                        <button 
+                                            className="btn btn-sm btn-outline-info"
+                                            onClick={() => {
+                                                console.log('🔍 Current sorted products:');
+                                                products.forEach((p, i) => {
+                                                    console.log(`${i+1}. ${p.name}: ৳${p.price}`);
+                                                });
+                                            }}
+                                        >
+                                            <i className="bi bi-bug me-1"></i>
+                                            ডিবাগ লগ
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                             
@@ -467,6 +344,9 @@ const SearchResults = () => {
                                 {products.map((product) => (
                                     <div key={product.id} className="col">
                                         <ProductCard product={product} />
+                                        <div className="text-center mt-2 small text-muted">
+                                            দাম: ৳{product.price}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -478,7 +358,11 @@ const SearchResults = () => {
                                         <li className={`page-item ${current_page <= 1 ? 'disabled' : ''}`}>
                                             <button 
                                                 className="page-link"
-                                                onClick={() => handlePageChange(parseInt(current_page) - 1)}
+                                                onClick={() => {
+                                                    const params = new URLSearchParams(location.search);
+                                                    params.set('page', parseInt(current_page) - 1);
+                                                    navigate(`?${params.toString()}`);
+                                                }}
                                                 disabled={current_page <= 1}
                                             >
                                                 <i className="bi bi-chevron-left"></i>
@@ -491,7 +375,11 @@ const SearchResults = () => {
                                                 <li key={pageNum} className={`page-item ${parseInt(current_page) === pageNum ? 'active' : ''}`}>
                                                     <button 
                                                         className="page-link"
-                                                        onClick={() => handlePageChange(pageNum)}
+                                                        onClick={() => {
+                                                            const params = new URLSearchParams(location.search);
+                                                            params.set('page', pageNum);
+                                                            navigate(`?${params.toString()}`);
+                                                        }}
                                                     >
                                                         {pageNum}
                                                     </button>
@@ -499,16 +387,14 @@ const SearchResults = () => {
                                             );
                                         })}
                                         
-                                        {total_pages > 5 && (
-                                            <li className="page-item disabled">
-                                                <span className="page-link">...</span>
-                                            </li>
-                                        )}
-                                        
                                         <li className={`page-item ${current_page >= total_pages ? 'disabled' : ''}`}>
                                             <button 
                                                 className="page-link"
-                                                onClick={() => handlePageChange(parseInt(current_page) + 1)}
+                                                onClick={() => {
+                                                    const params = new URLSearchParams(location.search);
+                                                    params.set('page', parseInt(current_page) + 1);
+                                                    navigate(`?${params.toString()}`);
+                                                }}
                                                 disabled={current_page >= total_pages}
                                             >
                                                 <i className="bi bi-chevron-right"></i>
@@ -519,34 +405,6 @@ const SearchResults = () => {
                             )}
                         </>
                     )}
-                </div>
-            </div>
-            
-            {/* ফুটার সেকশন */}
-            <div className="mt-5 pt-4 border-top">
-                <div className="d-flex flex-wrap justify-content-between align-items-center">
-                    <div>
-                        <small className="text-muted">
-                            <i className="bi bi-info-circle me-1"></i>
-                            {total_results} টি পণ্য পাওয়া গেছে | সর্ট: {getSortLabel(sort_by || filters.sort_by)}
-                        </small>
-                    </div>
-                    <div className="d-flex flex-wrap gap-2">
-                        <button 
-                            className="btn btn-outline-primary btn-sm"
-                            onClick={() => window.scrollTo(0, 0)}
-                        >
-                            <i className="bi bi-arrow-up me-1"></i>
-                            উপরে যান
-                        </button>
-                        <button 
-                            className="btn btn-outline-secondary btn-sm"
-                            onClick={() => navigate('/')}
-                        >
-                            <i className="bi bi-house me-1"></i>
-                            হোমপেজ
-                        </button>
-                    </div>
                 </div>
             </div>
             
@@ -583,15 +441,6 @@ const SearchResults = () => {
                         opacity: 1; 
                         transform: translateY(0); 
                     }
-                }
-                
-                .product-grid {
-                    transition: all 0.3s ease;
-                }
-                
-                .pagination .page-item.active .page-link {
-                    background-color: #0d6efd;
-                    border-color: #0d6efd;
                 }
             `}</style>
         </div>
