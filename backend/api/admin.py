@@ -39,18 +39,22 @@ class ProductAdmin(admin.ModelAdmin):
     raw_id_fields = ('category',)
     date_hierarchy = 'created'
     ordering = ('-created',)
+    
+    # ✅ OPTION 2: ফিল্ডসেট ব্যবহার (সুন্দর লেআউট)
     fieldsets = (
         ('Basic Information', {
             'fields': ('name', 'slug', 'category', 'description')
         }),
         ('Price & Quantity', {
-            'fields': ('price', 'quantity_unit', 'stock')
+            'fields': ('price', 'quantity_unit', 'stock'),
+            'description': 'Set the price and quantity information'
         }),
-        ('Status', {
+        ('Status & Features', {
             'fields': ('available', 'featured')
         }),
         ('Image', {
-            'fields': ('image',)
+            'fields': ('image',),
+            'classes': ('collapse',)  # Optional: collapse for image section
         }),
     )
 
@@ -75,3 +79,8 @@ class UserAdmin(BaseUserAdmin):
 # Unregister and re-register User with custom admin
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
+
+# ✅ Admin site customization
+admin.site.site_header = "Organic Bazar Admin"
+admin.site.site_title = "Organic Bazar Admin Portal"
+admin.site.index_title = "Welcome to Organic Bazar Admin Panel"
