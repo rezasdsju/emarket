@@ -9,9 +9,9 @@ import ProductDetail from './components/ProductDetail';
 import Cart from './components/Cart';
 import CategoryProducts from './components/CategoryProducts';
 import SearchResults from './components/SearchResults';
-import AllProducts from './components/AllProducts';  // ✅ নতুন
-import About from './components/About';  // ✅ নতুন
-import AdminLogin from './components/AdminLogin';  // ✅ নতুন
+import AllProducts from './components/AllProducts';
+import About from './components/About';
+import AdminLogin from './components/AdminLogin';
 
 function App() {
     const [cartItems, setCartItems] = useState([]);
@@ -97,7 +97,7 @@ function App() {
                 <div className="pt-5">
                     <Routes>
                         <Route path="/" element={<Home />} />
-                        <Route path="/products" element={<AllProducts />} />  {/* ✅ নতুন */}
+                        <Route path="/products" element={<AllProducts />} />
                         <Route path="/categories" element={<CategoryProducts />} />
                         <Route path="/category/:slug" element={<CategoryProducts />} />
                         <Route path="/product/:id" element={<ProductDetail addToCart={addToCart} />} />
@@ -110,8 +110,8 @@ function App() {
                             />
                         } />
                         <Route path="/search" element={<SearchResults />} />
-                        <Route path="/about" element={<About />} />  {/* ✅ নতুন */}
-                        <Route path="/admin/login" element={<AdminLogin />} />  {/* ✅ নতুন */}
+                        <Route path="/about" element={<About />} />
+                        <Route path="/admin/login" element={<AdminLogin />} />
                         
                         <Route path="*" element={
                             <div className="container mt-5 text-center">
@@ -123,10 +123,91 @@ function App() {
                     </Routes>
                 </div>
                 
-                {/* Footer - আগের মতই থাকবে */}
+                {/* ফুটার - আগের মতো সম্পূর্ণ রাখা হয়েছে */}
                 <footer className="bg-dark text-white mt-5 py-4">
                     <div className="container">
-                        {/* Footer content... */}
+                        <div className="row">
+                            <div className="col-md-4">
+                                <h5>অর্গানিক বাজার</h5>
+                                <p>প্রাকৃতিক ও স্বাস্থ্যকর খাবার সরবরাহ করে।</p>
+                                <div className="d-flex gap-2">
+                                    <span className="badge bg-primary">পণ্য: ১০০+</span>
+                                    <span className="badge bg-success">গ্রাহক: ৫০০+</span>
+                                </div>
+                            </div>
+                            <div className="col-md-4">
+                                <h5>যোগাযোগ</h5>
+                                <p className="mb-1">
+                                    <i className="bi bi-envelope me-2"></i>
+                                    support@organicbazar.com
+                                </p>
+                                <p className="mb-1">
+                                    <i className="bi bi-telephone me-2"></i>
+                                    ০১৭২২২৯২৬০৩
+                                </p>
+                                <p className="mb-1">
+                                    <i className="bi bi-geo-alt me-2"></i>
+                                    সাভার, ঢাকা, বাংলাদেশ
+                                </p>
+                            </div>
+                            <div className="col-md-4">
+                                <h5>গুরুত্বপূর্ণ লিংক</h5>
+                                <ul className="list-unstyled">
+                                    <li className="mb-1">
+                                        <a href="#privacy" className="text-white text-decoration-none">
+                                            <i className="bi bi-shield-check me-1"></i>
+                                            প্রাইভেসি পলিসি
+                                        </a>
+                                    </li>
+                                    <li className="mb-1">
+                                        <a href="#terms" className="text-white text-decoration-none">
+                                            <i className="bi bi-file-text me-1"></i>
+                                            টার্মস অ্যান্ড কন্ডিশন
+                                        </a>
+                                    </li>
+                                    <li className="mb-1">
+                                        <a href="#return" className="text-white text-decoration-none">
+                                            <i className="bi bi-arrow-return-left me-1"></i>
+                                            রিটার্ন পলিসি
+                                        </a>
+                                    </li>
+                                    <li className="mb-1">
+                                        <a href="#shipping" className="text-white text-decoration-none">
+                                            <i className="bi bi-truck me-1"></i>
+                                            শিপিং পলিসি
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <hr className="bg-light my-3" />
+                        
+                        {/* Payment Methods */}
+                        <div className="row">
+                            <div className="col-12">
+                                <h6 className="text-center mb-3">সাপোর্টেড পেমেন্ট মেথড</h6>
+                                <div className="d-flex justify-content-center gap-3">
+                                    <div className="bg-white p-2 rounded">
+                                        <span className="text-dark fw-bold">bKash</span>
+                                    </div>
+                                    <div className="bg-white p-2 rounded">
+                                        <span className="text-dark fw-bold">Rocket</span>
+                                    </div>
+                                    <div className="bg-white p-2 rounded">
+                                        <span className="text-dark fw-bold">Nagad</span>
+                                    </div>
+                                    <div className="bg-white p-2 rounded">
+                                        <span className="text-dark fw-bold">Card</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr className="bg-light my-3" />
+                        
+                        <p className="text-center mb-0">
+                            &copy; {new Date().getFullYear()} অর্গানিক বাজার। সকল স্বত্ব সংরক্ষিত।
+                        </p>
                     </div>
                 </footer>
             </div>
