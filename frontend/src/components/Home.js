@@ -518,6 +518,7 @@ const Home = () => {
                             </div>
                         </div>
                     </div>
+                    {/*
                     <div className="col-md-4 mb-3">
                         <div className="card border-0 shadow-sm text-center h-100 bg-light">
                             <div className="card-body">
@@ -529,6 +530,7 @@ const Home = () => {
                             </div>
                         </div>
                     </div>
+                    */}
                 </div>
                 
                 {/* ক্যাটাগরি সেকশন */}
