@@ -167,7 +167,7 @@ const SearchResults = () => {
         return (
             <div className="container mt-5 text-center py-5">
                 <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">লোড হচ্ছে...</span>
+                    <span className="visually-hidden">Loading...</span>
                 </div>
                 <p className="mt-3">"{query}" এর জন্য সার্চ রেজাল্ট লোড হচ্ছে...</p>
             </div>
@@ -178,10 +178,10 @@ const SearchResults = () => {
         return (
             <div className="container mt-5">
                 <div className="alert alert-danger">
-                    <h4>সার্চ এরর</h4>
+                    <h4>Search Error</h4>
                     <p>{error}</p>
                     <button className="btn btn-primary" onClick={() => performSearch()}>
-                        আবার চেষ্টা করুন
+                        Try Again
                     </button>
                 </div>
             </div>
@@ -209,7 +209,7 @@ const SearchResults = () => {
                     <div className="col-md-8">
                         <h1 className="h3 fw-bold mb-3">
                             <i className="bi bi-search me-2"></i>
-                            সার্চ ফলাফল: "{query}"
+                            Search Results: "{query}"
                         </h1>
                         
                         <div className="alert alert-light border">
@@ -221,8 +221,8 @@ const SearchResults = () => {
                                     <strong>{total_results}</strong> টি পণ্য পাওয়া গেছে
                                 </div>
                                 <div className="text-muted small">
-                                    পৃষ্ঠা {current_page} / {total_pages} | 
-                                    সর্ট: {getSortLabel(sort_by)}
+                                    Page {current_page} / {total_pages} | 
+                                    Sort: {getSortLabel(sort_by)}
                                 </div>
                             </div>
                         </div>
@@ -287,7 +287,7 @@ const SearchResults = () => {
                     <div className="d-flex align-items-center">
                         <i className="bi bi-info-circle-fill me-2 fs-4"></i>
                         <div>
-                            <strong>পণ্যগুলো সর্ট করা হয়েছে:</strong> {getSortLabel(filters.sort_by)}
+                            <strong>Products are Sorted:</strong> {getSortLabel(filters.sort_by)}
                             <div className="small mt-1">
                                 {filters.sort_by === 'price_asc' ? 'সর্বনিম্ন দামের পণ্য প্রথমে দেখানো হচ্ছে' :
                                  filters.sort_by === 'price_desc' ? 'সর্বোচ্চ দামের পণ্য প্রথমে দেখানো হচ্ছে' :
@@ -321,7 +321,7 @@ const SearchResults = () => {
                                 <div className="alert alert-light border mb-3">
                                     <div className="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <strong>সর্টিং যাচাই:</strong> বর্তমানে {getSortLabel(sort_by)} অনুযায়ী সর্ট করা হয়েছে
+                                            <strong>Sorting Check:</strong> Currently sorted by {getSortLabel(sort_by)}
                                         </div>
                                         <button 
                                             className="btn btn-sm btn-outline-info"
@@ -345,7 +345,7 @@ const SearchResults = () => {
                                     <div key={product.id} className="col">
                                         <ProductCard product={product} />
                                         <div className="text-center mt-2 small text-muted">
-                                            দাম: ৳{product.price}
+                                            Price: TK{product.price}
                                         </div>
                                     </div>
                                 ))}

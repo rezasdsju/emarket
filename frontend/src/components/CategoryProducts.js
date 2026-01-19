@@ -152,7 +152,7 @@ const CategoryProducts = () => {
         return (
             <div className="container mt-5 py-5 text-center">
                 <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status">
-                    <span className="visually-hidden">লোড হচ্ছে...</span>
+                    <span className="visually-hidden">loading...</span>
                 </div>
                 <p className="mt-3 fs-5">
                     {slug ? `${category?.name || 'ক্যাটাগরি'} লোড হচ্ছে...` : 'ক্যাটাগরি লোড হচ্ছে...'}
@@ -171,22 +171,22 @@ const CategoryProducts = () => {
                 <div className="alert alert-danger alert-dismissible fade show" role="alert">
                     <h4 className="alert-heading">
                         <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                        ডেটা লোড করতে ব্যর্থ!
+                        Fail to load Data!
                     </h4>
                     <p>{error}</p>
                     <hr />
                     <div className="d-flex flex-wrap gap-2">
                         <Link to="/" className="btn btn-primary">
                             <i className="bi bi-house me-1"></i>
-                            হোমপেজে ফিরে যান
+                            Go to HomePage
                         </Link>
                         <button className="btn btn-outline-primary" onClick={slug ? fetchSpecificCategoryProducts : fetchAllCategories}>
                             <i className="bi bi-arrow-clockwise me-1"></i>
-                            আবার চেষ্টা করুন
+                            Try Again
                         </button>
                         <Link to="/categories" className="btn btn-outline-secondary">
                             <i className="bi bi-tags me-1"></i>
-                            ক্যাটাগরি তালিকা
+                            List of Categories
                         </Link>
                     </div>
                     <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -205,11 +205,11 @@ const CategoryProducts = () => {
                         <li className="breadcrumb-item">
                             <Link to="/" className="text-decoration-none">
                                 <i className="bi bi-house me-1"></i>
-                                হোম
+                                Home
                             </Link>
                         </li>
                         <li className="breadcrumb-item active" aria-current="page">
-                            <strong>সব ক্যাটাগরি</strong>
+                            <strong>All Categories</strong>
                         </li>
                     </ol>
                 </nav>
@@ -220,7 +220,7 @@ const CategoryProducts = () => {
                         <div className="col-md-8">
                             <h1 className="display-6 fw-bold text-primary mb-2">
                                 <i className="bi bi-tags me-2"></i>
-                                আমাদের ক্যাটাগরি সমূহ
+                                Our Categories
                             </h1>
                             <p className="lead mb-3">
                                 আপনার পছন্দের ক্যাটাগরি থেকে পণ্য নির্বাচন করুন
@@ -228,11 +228,11 @@ const CategoryProducts = () => {
                             <div className="d-flex flex-wrap gap-3 align-items-center">
                                 <span className="badge bg-primary fs-6 py-2 px-3">
                                     <i className="bi bi-tags me-1"></i>
-                                    {allCategories.length} টি ক্যাটাগরি
+                                    {allCategories.length} Categories
                                 </span>
                                 <span className="badge bg-info fs-6 py-2 px-3">
                                     <i className="bi bi-box-seam me-1"></i>
-                                    ১০০+ পণ্য
+                                    100+ Products
                                 </span>
                             </div>
                         </div>
@@ -248,15 +248,15 @@ const CategoryProducts = () => {
                 {allCategories.length === 0 ? (
                     <div className="alert alert-warning">
                         <i className="bi bi-exclamation-triangle me-2"></i>
-                        <strong>কোনো ক্যাটাগরি পাওয়া যায়নি।</strong>
+                        <strong>No Categories Found.</strong>
                         <div className="mt-2">
                             <Link to="/" className="btn btn-sm btn-outline-primary me-2">
                                 <i className="bi bi-house me-1"></i>
-                                হোমপেজ
+                                Home
                             </Link>
                             <button className="btn btn-sm btn-primary" onClick={fetchAllCategories}>
                                 <i className="bi bi-arrow-clockwise me-1"></i>
-                                রিফ্রেশ
+                                Refresh
                             </button>
                         </div>
                     </div>
@@ -273,7 +273,7 @@ const CategoryProducts = () => {
                                         <strong>{allCategories.length}</strong> টি ক্যাটাগরি পাওয়া গেছে
                                     </div>
                                     <div className="text-muted small">
-                                        ক্লিক করে পণ্য দেখুন
+                                        Click and View Products
                                     </div>
                                 </div>
                             </div>
@@ -309,7 +309,7 @@ const CategoryProducts = () => {
                                             <div className="category-meta mb-3">
                                                 <span className="badge bg-light text-dark border">
                                                     <i className="bi bi-box-seam me-1"></i>
-                                                    {cat.product_count || '০'} পণ্য
+                                                    {cat.product_count || '০'} Products
                                                 </span>
                                             </div>
                                             <div className="text-muted small mb-3">
@@ -319,7 +319,7 @@ const CategoryProducts = () => {
                                         <div className="card-footer bg-transparent border-top-0 text-center pb-3">
                                             <span className="badge bg-primary rounded-pill px-3 py-2">
                                                 <i className="bi bi-arrow-right me-1"></i>
-                                                পণ্য দেখুন
+                                                View Products
                                             </span>
                                         </div>
                                     </div>
@@ -332,15 +332,15 @@ const CategoryProducts = () => {
                             <div className="d-flex flex-wrap justify-content-center gap-3">
                                 <Link to="/" className="btn btn-outline-secondary">
                                     <i className="bi bi-arrow-left me-1"></i>
-                                    হোমপেজে ফিরে যান
+                                    Go to Home
                                 </Link>
                                 <Link to="/products" className="btn btn-outline-primary">
                                     <i className="bi bi-box-seam me-1"></i>
-                                    সব পণ্য দেখুন
+                                    View All Products
                                 </Link>
                                 <Link to="/search" className="btn btn-primary">
                                     <i className="bi bi-search me-1"></i>
-                                    পণ্য সার্চ করুন
+                                    Search Products
                                 </Link>
                             </div>
                         </div>
@@ -359,12 +359,12 @@ const CategoryProducts = () => {
                     <li className="breadcrumb-item">
                         <Link to="/" className="text-decoration-none">
                             <i className="bi bi-house me-1"></i>
-                            হোম
+                            Home
                         </Link>
                     </li>
                     <li className="breadcrumb-item">
                         <Link to="/categories" className="text-decoration-none">
-                            ক্যাটাগরি
+                            Categories
                         </Link>
                     </li>
                     <li className="breadcrumb-item active" aria-current="page">
@@ -391,7 +391,7 @@ const CategoryProducts = () => {
                             </span>
                             <span className="badge bg-warning fs-6 py-2 px-3">
                                 <i className="bi bi-star me-1"></i>
-                                বিশেষ অফার
+                                Special Offers
                             </span>
                         </div>
                     </div>
@@ -410,31 +410,31 @@ const CategoryProducts = () => {
                         <div className="card-header bg-light">
                             <h5 className="mb-0">
                                 <i className="bi bi-funnel me-2"></i>
-                                ফিল্টার
+                                Filter
                             </h5>
                         </div>
                         <div className="card-body">
                             {/* সর্টিং */}
                             <div className="mb-4">
-                                <label className="form-label fw-semibold">সর্ট করুন</label>
+                                <label className="form-label fw-semibold">Sort</label>
                                 <select 
                                     className="form-select" 
                                     value={sortBy}
                                     onChange={handleSortChange}
                                 >
-                                    <option value="-created">নতুন আগে</option>
-                                    <option value="created">পুরনো আগে</option>
-                                    <option value="price">দাম: কম থেকে বেশি</option>
-                                    <option value="-price">দাম: বেশি থেকে কম</option>
-                                    <option value="name">নাম: A-Z</option>
-                                    <option value="-name">নাম: Z-A</option>
+                                    <option value="-created">New First</option>
+                                    <option value="created">Old First</option>
+                                    <option value="price">Price: Low to High</option>
+                                    <option value="-price">Price: High to Low</option>
+                                    <option value="name">Name: A-Z</option>
+                                    <option value="-name">Name: Z-A</option>
                                 </select>
                             </div>
                             
                             {/* অন্যান্য ক্যাটাগরি */}
                             {allCategories.length > 1 && (
                                 <div className="mb-4">
-                                    <h6 className="border-bottom pb-2 mb-3">অন্যান্য ক্যাটাগরি</h6>
+                                    <h6 className="border-bottom pb-2 mb-3">Other Categories</h6>
                                     <div className="list-group list-group-flush">
                                         {allCategories
                                             .filter(cat => cat.id !== category.id)
@@ -463,7 +463,7 @@ const CategoryProducts = () => {
                             <div className="mt-3">
                                 <Link to="/categories" className="btn btn-outline-primary w-100">
                                     <i className="bi bi-arrow-left me-1"></i>
-                                    সব ক্যাটাগরি
+                                    View All Categories
                                 </Link>
                             </div>
                         </div>
@@ -489,11 +489,11 @@ const CategoryProducts = () => {
                                     </Link>
                                     <Link to="/products" className="btn btn-outline-primary">
                                         <i className="bi bi-box-seam me-1"></i>
-                                        সব পণ্য দেখুন
+                                        View All Products
                                     </Link>
                                     <button className="btn btn-outline-secondary" onClick={fetchSpecificCategoryProducts}>
                                         <i className="bi bi-arrow-clockwise me-1"></i>
-                                        আবার চেষ্টা করুন
+                                        Try Again
                                     </button>
                                 </div>
                             </div>
@@ -513,18 +513,18 @@ const CategoryProducts = () => {
                             <div className="mt-4 pt-3 border-top">
                                 <div className="d-flex justify-content-between align-items-center">
                                     <div className="text-muted">
-                                        মোট পণ্য: <strong>{products.length}</strong>
+                                        Total Products: <strong>{products.length}</strong>
                                     </div>
                                     <div className="text-muted">
-                                        সর্ট: {
-                                            sortBy === '-created' ? 'নতুন আগে' :
-                                            sortBy === 'created' ? 'পুরনো আগে' :
-                                            sortBy === 'price' ? 'দাম: কম থেকে বেশি' :
-                                            sortBy === '-price' ? 'দাম: বেশি থেকে কম' :
-                                            sortBy === 'name' ? 'নাম: A-Z' : 'নাম: Z-A'
+                                        Sort: {
+                                            sortBy === '-created' ? 'New First' :
+                                            sortBy === 'created' ? 'Old First' :
+                                            sortBy === 'price' ? 'Price: Low to High' :
+                                            sortBy === '-price' ? 'Price: High to Low' :
+                                            sortBy === 'name' ? 'Name: A-Z' : 'Name: Z-A'
                                         }
                                     </div>
-                                </div>
+                                </div> 
                             </div>
                         </>
                     )}

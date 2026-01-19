@@ -110,7 +110,7 @@ const AllProducts = () => {
         return (
             <div className="container mt-5 text-center py-5">
                 <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">লোড হচ্ছে...</span>
+                    <span className="visually-hidden">loading...</span>
                 </div>
                 <p className="mt-3">পণ্য লোড হচ্ছে...</p>
             </div>
@@ -121,10 +121,10 @@ const AllProducts = () => {
         return (
             <div className="container mt-5">
                 <div className="alert alert-danger">
-                    <h4>এরর!</h4>
+                    <h4>Error!</h4>
                     <p>{error}</p>
                     <button className="btn btn-primary" onClick={fetchAllProducts}>
-                        আবার চেষ্টা করুন
+                        Try Again
                     </button>
                 </div>
             </div>
@@ -137,9 +137,9 @@ const AllProducts = () => {
             <nav aria-label="breadcrumb" className="mb-4">
                 <ol className="breadcrumb">
                     <li className="breadcrumb-item">
-                        <Link to="/">হোম</Link>
+                        <Link to="/">Home</Link>
                     </li>
-                    <li className="breadcrumb-item active">সব পণ্য</li>
+                    <li className="breadcrumb-item active">All Products</li>
                 </ol>
             </nav>
             
@@ -150,36 +150,36 @@ const AllProducts = () => {
                         <div className="card-header bg-light">
                             <h5 className="mb-0">
                                 <i className="bi bi-funnel me-2"></i>
-                                ফিল্টার করুন
+                                Filter
                             </h5>
                         </div>
                         <div className="card-body">
                             {/* সর্টিং */}
                             <div className="mb-4">
-                                <label className="form-label fw-semibold">সর্ট করুন</label>
+                                <label className="form-label fw-semibold">Sort</label>
                                 <select 
                                     className="form-select" 
                                     value={sortBy}
                                     onChange={handleSortChange}
                                 >
-                                    <option value="-created">নতুন আগে</option>
-                                    <option value="created">পুরনো আগে</option>
-                                    <option value="price">দাম: কম থেকে বেশি</option>
-                                    <option value="-price">দাম: বেশি থেকে কম</option>
-                                    <option value="name">নাম: A-Z</option>
-                                    <option value="-name">নাম: Z-A</option>
+                                    <option value="-created">New First</option>
+                                    <option value="created">Old First</option>
+                                    <option value="price">Price: Low to High</option>
+                                    <option value="-price">Price: High to Low</option>
+                                    <option value="name">Name: A-Z</option>
+                                    <option value="-name">Name: Z-A</option>
                                 </select>
                             </div>
                             
                             {/* ক্যাটাগরি */}
                             <div className="mb-4">
-                                <label className="form-label fw-semibold">ক্যাটাগরি</label>
+                                <label className="form-label fw-semibold">Category</label>
                                 <select 
                                     className="form-select" 
                                     value={selectedCategory}
                                     onChange={handleCategoryChange}
                                 >
-                                    <option value="">সব ক্যাটাগরি</option>
+                                    <option value="">All Categories</option>
                                     {categories.map(category => (
                                         <option key={category.id} value={category.id}>
                                             {category.name} ({category.product_count || 0})
@@ -190,13 +190,13 @@ const AllProducts = () => {
                             
                             {/* প্রাইস রেঞ্জ */}
                             <div className="mb-4">
-                                <label className="form-label fw-semibold">দামের রেঞ্জ</label>
+                                <label className="form-label fw-semibold">Price Range</label>
                                 <div className="row g-2">
                                     <div className="col-6">
                                         <input
                                             type="number"
                                             className="form-control form-control-sm"
-                                            placeholder="সর্বনিম্ন"
+                                            placeholder="Minimum"
                                             value={priceRange.min}
                                             onChange={(e) => handlePriceChange('min', e.target.value)}
                                         />
@@ -205,7 +205,7 @@ const AllProducts = () => {
                                         <input
                                             type="number"
                                             className="form-control form-control-sm"
-                                            placeholder="সর্বোচ্চ"
+                                            placeholder="Maximum"
                                             value={priceRange.max}
                                             onChange={(e) => handlePriceChange('max', e.target.value)}
                                         />
@@ -220,7 +220,7 @@ const AllProducts = () => {
                                     onClick={clearFilters}
                                 >
                                     <i className="bi bi-x-circle me-1"></i>
-                                    সব ফিল্টার ক্লিয়ার
+                                    Clear Filters
                                 </button>
                             )}
                         </div>
@@ -232,12 +232,12 @@ const AllProducts = () => {
                     <div className="d-flex justify-content-between align-items-center mb-4">
                         <h2 className="fw-bold mb-0">
                             <i className="bi bi-box-seam me-2"></i>
-                            সব পণ্য
+                            All Products
                             <span className="badge bg-primary ms-2">{products.length}</span>
                         </h2>
                         
                         <div className="text-muted">
-                            {selectedCategory ? 'ফিল্টার করা পণ্য' : 'সব পণ্য'}
+                            {selectedCategory ? 'Filtered Products' : 'All Products'}
                         </div>
                     </div>
                     
@@ -247,7 +247,7 @@ const AllProducts = () => {
                                 <div className="display-1 text-muted mb-4">
                                     <i className="bi bi-box"></i>
                                 </div>
-                                <h4 className="text-muted mb-3">কোনো পণ্য পাওয়া যায়নি</h4>
+                                <h4 className="text-muted mb-3">No products found</h4>
                                 <p className="text-muted mb-4">
                                     {selectedCategory || priceRange.min || priceRange.max 
                                         ? 'ফিল্টারের সাথে মিলে এমন কোনো পণ্য নেই। ফিল্টার পরিবর্তন করে আবার চেষ্টা করুন।'
@@ -258,7 +258,7 @@ const AllProducts = () => {
                                     onClick={clearFilters}
                                 >
                                     <i className="bi bi-arrow-clockwise me-1"></i>
-                                    ফিল্টার রিসেট করুন
+                                    Reset Filters
                                 </button>
                             </div>
                         </div>

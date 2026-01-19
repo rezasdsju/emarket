@@ -170,11 +170,11 @@ const ProductDetail = ({ addToCart }) => {
         return (
             <div className="container mt-5">
                 <div className="alert alert-danger">
-                    <h4>এরর!</h4>
+                    <h4>Error!</h4>
                     <p>{error}</p>
                     <div className="mt-3">
                         <Link to="/" className="btn btn-primary">
-                            হোমপেজে ফিরে যান
+                            Go to HomePage
                         </Link>
                     </div>
                 </div>
@@ -190,7 +190,7 @@ const ProductDetail = ({ addToCart }) => {
                     <h4>পণ্য পাওয়া যায়নি</h4>
                     <p>আপনার চাহিদা অনুযায়ী পণ্যটি পাওয়া যায়নি।</p>
                     <Link to="/" className="btn btn-primary">
-                        সব পণ্য দেখুন
+                        View All Products
                     </Link>
                 </div>
             </div>
@@ -203,14 +203,14 @@ const ProductDetail = ({ addToCart }) => {
             <div className="container mt-4">
                 <div className="card">
                     <div className="card-body">
-                        <h3>দ্রুত অর্ডার - {product.name}</h3>
-                        <p className="text-muted">আপনার তথ্য দিন এবং এখনই কিনুন</p>
+                        <h3>Quick Order - {product.name}</h3>
+                        <p className="text-muted">Enter your information and order now</p>
                         
                         <div className="row">
                             <div className="col-md-6">
                                 <div className="card mb-3">
                                     <div className="card-body">
-                                        <h5>পণ্যের তথ্য</h5>
+                                        <h5>Product Information</h5>
                                         <div className="d-flex align-items-center">
                                             <img 
                                                 src={product.image_url || (product.image ? `https://organic.satbeta.top${product.image}` : '')}
@@ -220,9 +220,9 @@ const ProductDetail = ({ addToCart }) => {
                                             />
                                             <div>
                                                 <h6>{product.name}</h6>
-                                                <p className="mb-1">দাম: ৳{product.price}</p>
-                                                <p className="mb-1">পরিমাণ: {quantity}</p>
-                                                <h5 className="text-primary">মোট: ৳{product.price * quantity}</h5>
+                                                <p className="mb-1">Price: ৳{product.price}</p>
+                                                <p className="mb-1">Quantity: {quantity}</p>
+                                                <h5 className="text-primary">Total: ৳{product.price * quantity}</h5>
                                             </div>
                                         </div>
                                     </div>
@@ -231,7 +231,7 @@ const ProductDetail = ({ addToCart }) => {
                             
                             <div className="col-md-6">
                                 <div className="mb-3">
-                                    <label className="form-label">পূর্ণ নাম *</label>
+                                    <label className="form-label">Full Name *</label>
                                     <input 
                                         type="text" 
                                         className="form-control"
@@ -246,7 +246,7 @@ const ProductDetail = ({ addToCart }) => {
                                 </div>
                                 
                                 <div className="mb-3">
-                                    <label className="form-label">মোবাইল নম্বর *</label>
+                                    <label className="form-label">Mobile Number *</label>
                                     <input 
                                         type="tel" 
                                         className="form-control"
@@ -261,7 +261,7 @@ const ProductDetail = ({ addToCart }) => {
                                 </div>
                                 
                                 <div className="mb-3">
-                                    <label className="form-label">ডেলিভারি ঠিকানা *</label>
+                                    <label className="form-label">Delivery Address *</label>
                                     <textarea 
                                         className="form-control"
                                         value={customerInfo.address}
@@ -276,7 +276,7 @@ const ProductDetail = ({ addToCart }) => {
                                 </div>
                                 
                                 <div className="alert alert-info small">
-                                    <strong>নোট:</strong> অর্ডার কনফার্ম করার পর পেমেন্টের নির্দেশনা দেওয়া হবে।
+                                    <strong>Note:</strong> অর্ডার কনফার্ম করার পর পেমেন্টের নির্দেশনা দেওয়া হবে।
                                 </div>
                             </div>
                         </div>
@@ -294,7 +294,7 @@ const ProductDetail = ({ addToCart }) => {
                                 onClick={() => setShowQuickCheckout(false)}
                                 disabled={orderProcessing}
                             >
-                                পিছনে
+                                Back
                             </button>
                         </div>
                     </div>
@@ -313,7 +313,7 @@ const ProductDetail = ({ addToCart }) => {
             <nav aria-label="breadcrumb" className="mb-4">
                 <ol className="breadcrumb">
                     <li className="breadcrumb-item">
-                        <Link to="/">হোম</Link>
+                        <Link to="/">Home</Link>
                     </li>
                     {product.category && (
                         <li className="breadcrumb-item">
@@ -397,14 +397,14 @@ const ProductDetail = ({ addToCart }) => {
                             </div>
                             
                             <div className="mb-4">
-                                <h5 className="border-bottom pb-2">পণ্যের বর্ণনা</h5>
+                                <h5 className="border-bottom pb-2">Product Description</h5>
                                 <p className="mt-2" style={{ whiteSpace: 'pre-line' }}>
                                     {product.description || 'এই পণ্যের জন্য কোনো বর্ণনা নেই।'}
                                 </p>
                             </div>
                             
                             <div className="mb-4">
-                                <h5 className="mb-3">পরিমাণ নির্বাচন করুন</h5>
+                                <h5 className="mb-3">Select Quantity</h5>
                                 <div className="d-flex align-items-center">
                                     <div className="input-group" style={{ width: '150px' }}>
                                         <button 
@@ -437,7 +437,7 @@ const ProductDetail = ({ addToCart }) => {
                                     </div>
                                     <div className="ms-3">
                                         <small className="text-muted">
-                                            সর্বোচ্চ: {product.stock} টি
+                                            Maximum: {product.stock} 
                                         </small>
                                     </div>
                                 </div>
@@ -451,7 +451,7 @@ const ProductDetail = ({ addToCart }) => {
                                         disabled={!product.available || product.stock === 0}
                                     >
                                         <i className="bi bi-cart-plus me-2"></i>
-                                        কার্টে যোগ করুন
+                                        Add to Cart
                                     </button>
                                     
                                     <button 
@@ -460,7 +460,7 @@ const ProductDetail = ({ addToCart }) => {
                                         disabled={!product.available || product.stock === 0}
                                     >
                                         <i className="bi bi-lightning-charge me-2"></i>
-                                        এখনই কিনুন
+                                        Order Now
                                     </button>
                                 </div>
                             </div>
@@ -470,16 +470,16 @@ const ProductDetail = ({ addToCart }) => {
                                     <div className="col-6">
                                         <div className="mb-1">
                                             <i className="bi bi-box me-1"></i>
-                                            <strong>পণ্য কোড:</strong> #{product.id}
+                                            <strong>Product Code:</strong> #{product.id}
                                         </div>
                                         <div className="mb-1">
                                             <i className="bi bi-calendar me-1"></i>
-                                            <strong>যোগ করা:</strong> {new Date(product.created).toLocaleDateString('bn-BD')}
+                                            <strong>Added:</strong> {new Date(product.created).toLocaleDateString('bn-BD')}
                                         </div>
                                     </div>
                                     <div className="col-6 text-end">
                                         <div className="mb-1">
-                                            <strong>শেয়ার করুন:</strong>
+                                            <strong>Share:</strong>
                                         </div>
                                         <div>
                                             <button className="btn btn-sm btn-outline-secondary me-1">
@@ -541,7 +541,7 @@ const ProductDetail = ({ addToCart }) => {
             
             <div className="mt-4 text-center">
                 <Link to="/" className="btn btn-outline-secondary">
-                    ← সব পণ্য দেখুন
+                    ← View All Products
                 </Link>
             </div>
         </div>

@@ -217,7 +217,7 @@ const SearchBar = () => {
                         <div className="suggestion-header p-2 border-bottom bg-light">
                             <small className="text-muted">
                                 <i className="bi bi-lightbulb me-1"></i>
-                                সার্চ সুজেশন ({suggestions.length})
+                                Search Suggestions ({suggestions.length})
                             </small>
                         </div>
                         
@@ -265,7 +265,7 @@ const SearchBar = () => {
                                 }}
                             >
                                 <i className="bi bi-search me-1"></i>
-                                "{searchTerm}" সার্চ করুন
+                                "{searchTerm}" Search
                             </button>
                         </div>
                     </div>
