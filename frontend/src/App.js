@@ -115,9 +115,9 @@ function App() {
                         
                         <Route path="*" element={
                             <div className="container mt-5 text-center">
-                                <h1>404 - পৃষ্ঠা পাওয়া যায়নি</h1>
-                                <p>আপনার চাওয়া পৃষ্ঠাটি খুঁজে পাওয়া যায়নি।</p>
-                                <a href="/" className="btn btn-primary mt-3">হোমপেজে ফিরে যান</a>
+                                <h1>404 - Page Not Found</h1>
+                                <p>The page you are looking for does not exist.</p>
+                                <a href="/" className="btn btn-primary mt-3">Go to Homepage</a>
                             </div>
                         } />
                     </Routes>
@@ -128,15 +128,15 @@ function App() {
                     <div className="container">
                         <div className="row">
                             <div className="col-md-4">
-                                <h5>অর্গানিক বাজার</h5>
-                                <p>প্রাকৃতিক ও স্বাস্থ্যকর খাবার সরবরাহ করে।</p>
+                                <h5>Sohoj Shop</h5>
+                                <p>Organic and healthy food products.</p>
                                 <div className="d-flex gap-2">
-                                    <span className="badge bg-primary">পণ্য: ১০০+</span>
-                                    <span className="badge bg-success">গ্রাহক: ৫০০+</span>
+                                    <span className="badge bg-primary">Products: 100+</span>
+                                    <span className="badge bg-success">Customers: 500+</span>
                                 </div>
                             </div>
                             <div className="col-md-4">
-                                <h5>যোগাযোগ</h5>
+                                <h5>Contact</h5>
                                 <p className="mb-1">
                                     <i className="bi bi-envelope me-2"></i>
                                     support@organicbazar.com
@@ -147,34 +147,34 @@ function App() {
                                 </p>
                                 <p className="mb-1">
                                     <i className="bi bi-geo-alt me-2"></i>
-                                    সাভার, ঢাকা, বাংলাদেশ
+                                    Savar, Dhaka, Bangladesh
                                 </p>
                             </div>
                             <div className="col-md-4">
-                                <h5>গুরুত্বপূর্ণ লিংক</h5>
+                                <h5>Important Links</h5>
                                 <ul className="list-unstyled">
                                     <li className="mb-1">
                                         <a href="#privacy" className="text-white text-decoration-none">
                                             <i className="bi bi-shield-check me-1"></i>
-                                            প্রাইভেসি পলিসি
+                                            Privacy Policy
                                         </a>
                                     </li>
                                     <li className="mb-1">
                                         <a href="#terms" className="text-white text-decoration-none">
                                             <i className="bi bi-file-text me-1"></i>
-                                            টার্মস অ্যান্ড কন্ডিশন
+                                            Terms and Conditions
                                         </a>
                                     </li>
                                     <li className="mb-1">
                                         <a href="#return" className="text-white text-decoration-none">
                                             <i className="bi bi-arrow-return-left me-1"></i>
-                                            রিটার্ন পলিসি
+                                            Return Policy
                                         </a>
                                     </li>
                                     <li className="mb-1">
                                         <a href="#shipping" className="text-white text-decoration-none">
                                             <i className="bi bi-truck me-1"></i>
-                                            শিপিং পলিসি
+                                            Shipping Policy
                                         </a>
                                     </li>
                                 </ul>
@@ -185,7 +185,7 @@ function App() {
                         {/* Payment Methods */}
                         <div className="row">
                             <div className="col-12">
-                                <h6 className="text-center mb-3">সাপোর্টেড পেমেন্ট মেথড</h6>
+                                <h6 className="text-center mb-3">Supported Payment Methods</h6>
                                 <div className="d-flex justify-content-center gap-3">
                                     <div className="bg-white p-2 rounded">
                                         <span className="text-dark fw-bold">bKash</span>
@@ -206,7 +206,7 @@ function App() {
                         <hr className="bg-light my-3" />
                         
                         <p className="text-center mb-0">
-                            &copy; {new Date().getFullYear()} অর্গানিক বাজার। সকল স্বত্ব সংরক্ষিত।
+                            &copy; {new Date().getFullYear()} Sohoj Shop. All rights reserved.
                         </p>
                     </div>
                 </footer>
