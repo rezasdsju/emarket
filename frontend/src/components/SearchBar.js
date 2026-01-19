@@ -156,7 +156,7 @@ const SearchBar = () => {
                         <input
                             type="text"
                             className="form-control"
-                            placeholder="পণ্য খুঁজুন (যেমন: খেজুর, মধু, আখরোট, বাদাম...)"
+                            placeholder="Search Products (যেমন: খেজুর, মধু, আখরোট, বাদাম...)"
                             value={searchTerm}
                             onChange={(e) => { 
                                 setSearchTerm(e.target.value);
@@ -244,9 +244,9 @@ const SearchBar = () => {
                                     <div className="flex-grow-1">
                                         <div className="fw-semibold">{suggestion.name}</div>
                                         <div className="text-muted small">
-                                            {suggestion.type === 'product' ? 'পণ্য' : 
-                                             suggestion.type === 'category' ? 'ক্যাটাগরি' : 
-                                             'জনপ্রিয় সার্চ'}
+                                            {suggestion.type === 'product' ? 'Products' : 
+                                             suggestion.type === 'category' ? 'Categories' : 
+                                             'Popular Searches'}
                                         </div>
                                     </div>
                                     <div>
