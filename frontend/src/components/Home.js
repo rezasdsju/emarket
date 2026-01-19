@@ -364,7 +364,7 @@ const Home = () => {
                 <div className="container">
                     <div className="row align-items-center">
                         <div className="col-lg-6">
-                            <h1 className="display-4 fw-bold mb-3">অর্গানিক বাজারে স্বাগতম!</h1>
+                            <h1 className="display-4 fw-bold mb-3">Welcome to Shohoj Shop!</h1>
                             <p className="lead mb-4">
                                 প্রকৃতির সেরা উপহার - ১০০% প্রাকৃতিক, রাসায়নিক মুক্ত পণ্য। 
                                 আপনার স্বাস্থ্য সুরক্ষার জন্য আমরা নির্বাচন করি সেরা অর্গানিক পণ্য।
@@ -372,11 +372,11 @@ const Home = () => {
                             <div className="d-flex flex-wrap gap-3">
                                 <Link to="/products" className="btn btn-light btn-lg px-4">
                                     <i className="bi bi-cart me-2"></i>
-                                    সব পণ্য দেখুন
+                                    All Products
                                 </Link>
                                 <Link to="/categories" className="btn btn-outline-light btn-lg px-4">
                                     <i className="bi bi-tags me-2"></i>
-                                    ক্যাটাগরি ব্রাউজ করুন
+                                    Browse Categories
                                 </Link>
                             </div>
                         </div>
@@ -424,7 +424,7 @@ const Home = () => {
                                                     className="btn btn-primary btn-sm"
                                                 >
                                                     <i className="bi bi-eye me-1"></i>
-                                                    বিস্তারিত দেখুন
+                                                    Details
                                                 </Link>
                                             </div>
                                         </div>
@@ -503,7 +503,7 @@ const Home = () => {
                                     <i className="bi bi-box-seam"></i>
                                 </div>
                                 <h3 className="card-title">{products.length}</h3>
-                                <p className="card-text text-muted">মোট পণ্য</p>
+                                <p className="card-text text-muted">Total Products</p>
                             </div>
                         </div>
                     </div>
@@ -514,7 +514,7 @@ const Home = () => {
                                     <i className="bi bi-tags"></i>
                                 </div>
                                 <h3 className="card-title">{categories.length}</h3>
-                                <p className="card-text text-muted">ক্যাটাগরি</p>
+                                <p className="card-text text-muted">Categories</p>
                             </div>
                         </div>
                     </div>
@@ -537,7 +537,7 @@ const Home = () => {
                 <div className="section-title mb-4">
                     <h2 className="fw-bold">
                         <i className="bi bi-grid me-2"></i>
-                        আমাদের ক্যাটাগরি সমূহ
+                        Our Categories
                         <span className="badge bg-primary ms-2">{categories.length}</span>
                     </h2>
                     <p className="text-muted">আপনার পছন্দের ক্যাটাগরি থেকে পণ্য নির্বাচন করুন</p>
@@ -555,7 +555,7 @@ const Home = () => {
                                 className="btn btn-sm btn-primary me-2"
                             >
                                 <i className="bi bi-gear me-1"></i>
-                                অ্যাডমিন প্যানেল
+                                Admin Panel
                             </a>
                         </div>
                     </div>
@@ -594,7 +594,7 @@ const Home = () => {
                 <div className="section-title mb-4">
                     <h2 className="fw-bold">
                         <i className="bi bi-star me-2"></i>
-                        সেরা পণ্য সমূহ
+                        Best Products
                         <span className="badge bg-success ms-2">{filteredProducts.length}</span>
                     </h2>
                 </div>
@@ -608,7 +608,7 @@ const Home = () => {
                                 onClick={() => setActiveTab('all')}
                             >
                                 <i className="bi bi-grid-3x3 me-1"></i>
-                                সব পণ্য
+                                All Products
                                 <span className="badge bg-secondary ms-1">{products.length}</span>
                             </button>
                         </li>
@@ -618,7 +618,7 @@ const Home = () => {
                                 onClick={() => setActiveTab('featured')}
                             >
                                 <i className="bi bi-star me-1"></i>
-                                বিশেষ অফার
+                                Special Offers
                                 <span className="badge bg-warning ms-1">
                                     {products.filter(p => p.featured).length}
                                 </span>
@@ -630,7 +630,7 @@ const Home = () => {
                                 onClick={() => setActiveTab('new')}
                             >
                                 <i className="bi bi-clock-history me-1"></i>
-                                নতুন পণ্য
+                                New Products
                             </button>
                         </li>
                         <li className="nav-item" role="presentation">
@@ -639,7 +639,7 @@ const Home = () => {
                                 onClick={() => setActiveTab('discount')}
                             >
                                 <i className="bi bi-percent me-1"></i>
-                                ডিসকাউন্ট
+                                Discount
                                 <span className="badge bg-danger ms-1">
                                     {products.filter(p => p.discount_price && p.discount_price < p.price).length}
                                 </span>
@@ -654,15 +654,15 @@ const Home = () => {
                         <i className="bi bi-info-circle me-2"></i>
                         <strong>{activeTab === 'all' ? 'কোনো পণ্য' : 
                                activeTab === 'featured' ? 'কোনো বিশেষ পণ্য' : 
-                               activeTab === 'new' ? 'কোনো নতুন পণ্য' : 'কোনো ডিসকাউন্ট পণ্য'} পাওয়া যায়নি।</strong>
+                               activeTab === 'new' ? 'কোনো নতুন পণ্য' : 'কোনো ডিসকাউন্ট পণ্য'} Not Found।</strong>
                         <div className="mt-2">
                             <button className="btn btn-sm btn-outline-primary me-2" onClick={fetchData}>
                                 <i className="bi bi-arrow-clockwise me-1"></i>
-                                রিফ্রেশ করুন
+                                Refresh
                             </button>
                             <button className="btn btn-sm btn-primary" onClick={() => setActiveTab('all')}>
                                 <i className="bi bi-grid me-1"></i>
-                                সব পণ্য দেখুন
+                                All Products
                             </button>
                         </div>
                     </div>
@@ -702,7 +702,7 @@ const Home = () => {
                         onClick={fetchData}
                     >
                         <i className="bi bi-arrow-clockwise me-1"></i>
-                        লিস্ট আপডেট করুন
+                        Update List
                     </button>
                 </div>
             </div>

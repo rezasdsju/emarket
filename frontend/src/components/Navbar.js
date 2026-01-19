@@ -36,7 +36,7 @@ const Navbar = ({ cartItemsCount = 0 }) => {
             <div className="container">
                 <Link className="navbar-brand fw-bold" to="/" onClick={() => setIsOpen(false)}>
                     <i className="bi bi-shop me-2"></i>
-                    অর্গানিক বাজার
+                    Shohoj Shop
                 </Link>
                 
                 <div className="d-none d-lg-flex align-items-center" style={{ flexGrow: 1, maxWidth: '400px', margin: '0 20px' }}>
@@ -135,7 +135,7 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                                 }}
                             >
                                 <i className="bi bi-house-door me-1"></i>
-                                হোম
+                                Home
                             </Link>
                         </li>
                         
@@ -146,7 +146,7 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                                 onClick={() => setIsOpen(false)}
                             >
                                 <i className="bi bi-box-seam me-1"></i>
-                                পণ্য
+                                Products
                             </Link>
                         </li>
                         
@@ -157,7 +157,7 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                                 onClick={() => setIsOpen(false)}
                             >
                                 <i className="bi bi-tags me-1"></i>
-                                ক্যাটাগরি
+                                Categories
                             </Link>
                         </li>
                         
@@ -168,7 +168,7 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                                 onClick={() => setIsOpen(false)}
                             >
                                 <i className="bi bi-cart3 me-1"></i>
-                                কার্ট
+                                Cart
                                 {cartItemsCount > 0 && (
                                     <span className="badge bg-danger ms-1">
                                         {cartItemsCount}
@@ -184,7 +184,7 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                                 onClick={() => setIsOpen(false)}
                             >
                                 <i className="bi bi-info-circle me-1"></i>
-                                আমাদের সম্পর্কে
+                                About us 
                             </Link>
                         </li>
                         
@@ -200,7 +200,7 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                                         onClick={() => setIsOpen(false)}
                                     >
                                         <i className="bi bi-gear me-1"></i>
-                                        এডমিন প্যানেল
+                                        Admin Panel
                                     </a>
                                 </li>
                                 <li className="nav-item">
@@ -210,7 +210,7 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                                         style={{ background: 'none', border: 'none' }}
                                     >
                                         <i className="bi bi-box-arrow-right me-1"></i>
-                                        লগআউট
+                                        Logout
                                     </button>
                                 </li>
                             </>
@@ -222,7 +222,7 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                                     onClick={() => setIsOpen(false)}
                                 >
                                     <i className="bi bi-person-circle me-1"></i>
-                                    এডমিন লগইন
+                                    Admin Login
                                 </Link>
                             </li>
                         )}
@@ -232,14 +232,14 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                         <Link 
                             to="/cart" 
                             className="nav-link text-white position-relative"
-                            title="শপিং কার্ট"
+                            title="Shopping Cart"
                             onClick={() => setIsOpen(false)}
                         >
                             <i className="bi bi-cart3 fs-5"></i>
                             {cartItemsCount > 0 && (
                                 <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                                     {cartItemsCount}
-                                    <span className="visually-hidden">কার্ট আইটেম</span>
+                                    <span className="visually-hidden">Cart items</span>
                                 </span>
                             )}
                         </Link>
@@ -248,7 +248,7 @@ const Navbar = ({ cartItemsCount = 0 }) => {
                     <div className="d-lg-none mt-3">
                         <div className="card">
                             <div className="card-body p-2">
-                                <p className="small text-muted mb-2">দ্রুত সার্চ:</p>
+                                <p className="small text-muted mb-2">Quick Search:</p>
                                 <div className="d-flex flex-wrap gap-1">
                                     {['মধু', 'কিচমিচ', 'আখরোট', 'বাদাম', 'খেজুর'].map((term) => (
                                         <button
