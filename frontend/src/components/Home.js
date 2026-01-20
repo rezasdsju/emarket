@@ -495,43 +495,43 @@ const Home = () => {
             {/* Main Content */}
             <div className="container mt-5">
                 {/* স্ট্যাটাস বার */}
-                <div className="row mb-4">
-                    <div className="col-md-4 mb-3">
-                        <div className="card border-0 shadow-sm text-center h-100 bg-light">
-                            <div className="card-body">
-                                <div className="display-6 text-primary mb-2">
-                                    <i className="bi bi-box-seam"></i>
-                                </div>
-                                <h3 className="card-title">{products.length}</h3>
-                                <p className="card-text text-muted">Total Products</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-md-4 mb-3">
-                        <div className="card border-0 shadow-sm text-center h-100 bg-light">
-                            <div className="card-body">
-                                <div className="display-6 text-success mb-2">
-                                    <i className="bi bi-tags"></i>
-                                </div>
-                                <h3 className="card-title">{categories.length}</h3>
-                                <p className="card-text text-muted">Categories</p>
-                            </div>
-                        </div>
-                    </div>
-                    {/*
-                    <div className="col-md-4 mb-3">
-                        <div className="card border-0 shadow-sm text-center h-100 bg-light">
-                            <div className="card-body">
-                                <div className="display-6 text-warning mb-2">
-                                    <i className="bi bi-truck"></i>
-                                </div>
-                                <h3 className="card-title">ফ্রি</h3>
-                                <p className="card-text text-muted">ডেলিভারি</p>
-                            </div>
-                        </div>
-                    </div>
-                    */}
+{/* স্ট্যাটাস বার - সব ডিভাইসে পাশাপাশি (৩টি) */}
+<div className="row row-cols-3 mb-4 g-3">
+    <div className="col">
+        <div className="card border-0 shadow-sm text-center h-100 bg-light">
+            <div className="card-body">
+                <div className="display-6 text-primary mb-2">
+                    <i className="bi bi-box-seam"></i>
                 </div>
+                <h3 className="card-title">{products.length}</h3>
+                <p className="card-text text-muted">Total Products</p>
+            </div>
+        </div>
+    </div>
+    <div className="col">
+        <div className="card border-0 shadow-sm text-center h-100 bg-light">
+            <div className="card-body">
+                <div className="display-6 text-success mb-2">
+                    <i className="bi bi-tags"></i>
+                </div>
+                <h3 className="card-title">{categories.length}</h3>
+                <p className="card-text text-muted">Categories</p>
+            </div>
+        </div>
+    </div>
+    <div className="col">
+        <div className="card border-0 shadow-sm text-center h-100 bg-light">
+            <div className="card-body">
+                <div className="display-6 text-warning mb-2">
+                    <i className="bi bi-truck"></i>
+                </div>
+                <h3 className="card-title">Free</h3>
+                <p className="card-text text-muted">Delivery</p>
+            </div>
+        </div>
+    </div>
+</div>
+
                 
                 {/* ক্যাটাগরি সেকশন */}
                 <div className="section-title mb-4">
