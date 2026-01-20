@@ -280,14 +280,14 @@ const Home = () => {
                     <div className="d-flex flex-column flex-md-row gap-2">
                         <button className="btn btn-primary me-md-2" onClick={fetchData}>
                             <i className="bi bi-arrow-clockwise me-1"></i>
-                            আবার চেষ্টা করুন
+                            Try Again
                         </button>
                         <button 
                             className="btn btn-outline-secondary"
                             onClick={() => window.location.reload()}
                         >
                             <i className="bi bi-house me-1"></i>
-                            হোমে ফিরে যান
+                            Go to Home
                         </button>
                     </div>
                 </div>
@@ -364,7 +364,7 @@ const Home = () => {
                 <div className="container">
                     <div className="row align-items-center">
                         <div className="col-lg-6">
-                            <h1 className="display-4 fw-bold mb-3">Welcome to Shohoj Shop!</h1>
+                            <h1 className="display-4 fw-bold mb-3">Welcome to Shohoz Shop!</h1>
                             <p className="lead mb-4">
                                 প্রকৃতির সেরা উপহার - ১০০% প্রাকৃতিক, রাসায়নিক মুক্ত পণ্য। 
                                 আপনার স্বাস্থ্য সুরক্ষার জন্য আমরা নির্বাচন করি সেরা অর্গানিক পণ্য।

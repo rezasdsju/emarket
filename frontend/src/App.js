@@ -128,7 +128,7 @@ function App() {
                     <div className="container">
                         <div className="row">
                             <div className="col-md-4">
-                                <h5>Sohoj Shop</h5>
+                                <h5>Shohoz Shop</h5>
                                 <p>Organic and healthy food products.</p>
                                 <div className="d-flex gap-2">
                                     <span className="badge bg-primary">Products: 100+</span>
@@ -143,7 +143,7 @@ function App() {
                                 </p>
                                 <p className="mb-1">
                                     <i className="bi bi-telephone me-2"></i>
-                                    ০১৭২২২৯২৬০৩
+                                    01795468672
                                 </p>
                                 <p className="mb-1">
                                     <i className="bi bi-geo-alt me-2"></i>
@@ -206,7 +206,7 @@ function App() {
                         <hr className="bg-light my-3" />
                         
                         <p className="text-center mb-0">
-                            &copy; {new Date().getFullYear()} Sohoj Shop. All rights reserved.
+                            &copy; {new Date().getFullYear()} Shohoz Shop. All rights reserved.
                         </p>
                     </div>
                 </footer>
