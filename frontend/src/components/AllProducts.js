@@ -14,13 +14,10 @@ const AllProducts = () => {
     
     const API_BASE_URL = 'https://organic.satbeta.top';
     
-useEffect(() => {
-    // ✅ All products পেজে ঢুকলে সরাসরি শুরুতে চলে যাবে
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    fetchAllProducts();
-    fetchCategories();
-}, [sortBy, selectedCategory, priceRange]);
+    useEffect(() => {
+        fetchAllProducts();
+        fetchCategories();
+    }, [sortBy, selectedCategory, priceRange]);
     
     const fetchAllProducts = async () => {
         try {
