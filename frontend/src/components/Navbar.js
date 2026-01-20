@@ -36,7 +36,7 @@ const Navbar = ({ cartItemsCount = 0 }) => {
             <div className="container">
                 <Link className="navbar-brand fw-bold" to="/" onClick={() => setIsOpen(false)}>
                     <i className="bi bi-shop me-2"></i>
-                    Shohoj Shop
+                    Shohoz Shop
                 </Link>
                 
                 <div className="d-none d-lg-flex align-items-center" style={{ flexGrow: 1, maxWidth: '400px', margin: '0 20px' }}>
