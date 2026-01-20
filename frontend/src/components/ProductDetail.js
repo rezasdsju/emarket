@@ -18,9 +18,16 @@ const ProductDetail = ({ addToCart }) => {
     });
     const [orderProcessing, setOrderProcessing] = useState(false);
     
-    useEffect(() => {
-        fetchProduct();
-    }, [id]);
+useEffect(() => {
+    // মোবাইল ডিভাইসের জন্য স্ক্রল রিসেট
+    window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'smooth' // smooth animation যোগ করতে পারেন
+    });
+    
+    fetchProduct();
+}, [id]);
     
     const fetchProduct = async () => {
         try {
@@ -220,7 +227,7 @@ const ProductDetail = ({ addToCart }) => {
                                             />
                                             <div>
                                                 <h6>{product.name}</h6>
-                                                <p className="mb-1">Price: ৳{product.price}</p>
+                                                <p className="mb-1">Price: TK.{product.price}</p>
                                                 <p className="mb-1">Quantity: {quantity}</p>
                                                 <h5 className="text-primary">Total: ৳{product.price * quantity}</h5>
                                             </div>
@@ -240,7 +247,7 @@ const ProductDetail = ({ addToCart }) => {
                                             ...customerInfo, 
                                             name: e.target.value
                                         })}
-                                        placeholder="আপনার পূর্ণ নাম"
+                                        placeholder="Your full name"
                                         required
                                     />
                                 </div>
@@ -269,7 +276,7 @@ const ProductDetail = ({ addToCart }) => {
                                             ...customerInfo, 
                                             address: e.target.value
                                         })}
-                                        placeholder="বিস্তারিত ঠিকানা"
+                                        placeholder="Detail delivery address here..."
                                         rows="3"
                                         required
                                     />
@@ -388,10 +395,10 @@ const ProductDetail = ({ addToCart }) => {
                             <div className="mb-4">
                                 <div className="d-flex align-items-center">
                                     <span className={`badge ${product.available && product.stock > 0 ? 'bg-success' : 'bg-danger'} me-2`}>
-                                        {product.available && product.stock > 0 ? 'ইন স্টক' : 'স্টক নেই'}
+                                        {product.available && product.stock > 0 ? 'In Stock' : 'Not Available'}
                                     </span>
                                     <span className="text-muted">
-                                        {product.stock > 0 ? `${product.stock} টি অবশিষ্ট` : 'স্টক ফুরিয়ে গেছে'}
+                                        {product.stock > 0 ? `${product.stock} remaining` : 'Stock Out'}
                                     </span>
                                 </div>
                             </div>
@@ -502,7 +509,7 @@ const ProductDetail = ({ addToCart }) => {
             
             {relatedProducts.length > 0 && (
                 <div className="mt-5 pt-4 border-top">
-                    <h3 className="mb-4">একই ক্যাটাগরির অন্যান্য পণ্য</h3>
+                    <h3 className="mb-4">Other Products in This Category</h3>
                     <div className="row">
                         {relatedProducts.map(relatedProduct => (
                             <div key={relatedProduct.id} className="col-lg-3 col-md-4 col-sm-6 mb-4">
@@ -526,9 +533,9 @@ const ProductDetail = ({ addToCart }) => {
                                             }}>
                                                 {relatedProduct.name}
                                             </h6>
-                                            <p className="text-primary fw-bold mb-1">৳{relatedProduct.price}</p>
+                                            <p className="text-primary fw-bold mb-1">TK.{relatedProduct.price}</p>
                                             <small className={`badge ${relatedProduct.available ? 'bg-success' : 'bg-danger'}`}>
-                                                {relatedProduct.available ? 'ইন স্টক' : 'স্টক নেই'}
+                                                {relatedProduct.available ? 'In Stock' : 'Not Available'}
                                             </small>
                                         </div>
                                     </Link>

@@ -56,7 +56,7 @@ const ProductCard = ({ product }) => {
                 {!product.available && (
                     <div className="position-absolute top-0 start-0 bg-danger text-white p-2" 
                          style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>
-                        স্টক নেই
+                        No Stock
                     </div>
                 )}
                 
@@ -64,7 +64,7 @@ const ProductCard = ({ product }) => {
                     <div className="position-absolute top-0 end-0 bg-warning text-dark p-2" 
                          style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>
                         <i className="bi bi-star-fill me-1"></i>
-                        বিশেষ
+                        Special
                     </div>
                 )}
             </div>
@@ -115,11 +115,11 @@ const ProductCard = ({ product }) => {
                     <div className="d-flex justify-content-between align-items-center mb-2">
                         <div className="stock-info">
                             <span className={`badge ${product.available ? 'bg-success' : 'bg-danger'} me-2`}>
-                                {product.available ? 'ইন স্টক' : 'স্টক নেই'}
+                                {product.available ? 'In Stock' : 'Not Available'}
                             </span>
                             {product.stock > 0 && (
                                 <span className="badge bg-secondary">
-                                    স্টক: {product.stock || 0}
+                                    Stock: {product.stock || 0}
                                 </span>
                             )}
                         </div>
@@ -132,16 +132,16 @@ const ProductCard = ({ product }) => {
                                 fontSize: '0.85rem'
                             }}
                         >
-                            বিস্তারিত
+                            Details
                         </Link>
                     </div>
                     
                     {product.category && (
                         <div className="category-section mt-2 pt-2 border-top">
-                            <small className="text-muted d-block mb-1">ক্যাটাগরি:</small>
+                            <small className="text-muted d-block mb-1">Category:</small>
                             <span className="badge bg-light text-dark border px-3 py-1" 
                                   style={{ fontSize: '0.8rem' }}>
-                                {product.category.name || 'সাধারণ'}
+                                {product.category.name || 'General'}
                             </span>
                         </div>
                     )}
