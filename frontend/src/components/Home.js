@@ -97,6 +97,8 @@ const Home = () => {
     };
     
     useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // পেজ লোড হলে উপরে চলে যাবে
+
         fetchData();
         
         // ✅ 5 সেকেন্ড পরপর হিরো পণ্য চেঞ্জ
