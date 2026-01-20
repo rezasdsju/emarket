@@ -143,9 +143,11 @@ const CategoryProducts = () => {
         setSortBy(e.target.value);
     };
     
-    const handleCategoryClick = (categorySlug) => {
-        navigate(`/category/${categorySlug}`);
-    };
+const handleCategoryClick = (categorySlug) => {
+    // ✅ এই লাইন যোগ করুন
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigate(`/category/${categorySlug}`);
+};
     
     // লোডিং স্টেট
     if (loading) {
