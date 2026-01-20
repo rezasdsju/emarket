@@ -17,7 +17,8 @@ const CategoryProducts = () => {
     const API_BASE_URL = 'https://organic.satbeta.top';
     
     useEffect(() => {
-        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    
         // চেক করি এটি শুধু ক্যাটাগরি লিস্ট পৃষ্ঠা নাকি নির্দিষ্ট ক্যাটাগরির পণ্য পৃষ্ঠা
         setIsCategoryPage(!slug);
         
