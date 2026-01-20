@@ -211,9 +211,9 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle'
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',  # Anonymous users
-        'user': '1000/day',  # Authenticated users
-        'search': '200/hour',  # ✅ নতুন: সার্চের জন্য আলাদা থ্রোটল
+        'anon': '1000/hour',  # Anonymous users
+        'user': '5000/hour',  # Authenticated users
+        'search': '500/hour',  # ✅ নতুন: সার্চের জন্য আলাদা থ্রোটল
     },
     # ✅ সার্চ প্যারামিটার সেটিংস
     'SEARCH_PARAM': 'q',
