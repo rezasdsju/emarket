@@ -73,8 +73,8 @@ backend/
 ### 2. Clone & install
 
 ```bash
-git clone <your-backend-repo-url>
-cd <your-backend-folder>
+git clone https://github.com/rezasdsju/emarket.git
+cd emarket
 
 python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
