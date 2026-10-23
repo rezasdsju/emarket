@@ -3,6 +3,7 @@
 RESTful backend for **Organic Solution**, an E-Commerce platform for organic products (dates, nuts, honey, dried fruits and more). Built with **Django**, **Django REST Framework** and **PostgreSQL**, it powers product browsing, search, order placement and payment tracking for the React frontend.
 
 🔗 **Live Frontend:** https://organic-solution-pqrs.vercel.app/
+
 💻 **Frontend Repo:** https://github.com/rezasdsju/organic-solution-frontend
 ---
 
