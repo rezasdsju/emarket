@@ -2,9 +2,8 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.http import JsonResponse  # নতুন লাইন যোগ করুন
+from django.http import JsonResponse  
 
-# হোমপেজের জন্য ফাংশন যোগ করুন
 def home(request):
     return JsonResponse({
         'message': 'ঘরের বাজার API সার্ভার চালু আছে!',
@@ -17,7 +16,7 @@ def home(request):
     })
 
 urlpatterns = [
-    path('', home, name='home'),  # সরাসরি JSON রিটার্ন করবে
+    path('', home, name='home'), 
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
 ]

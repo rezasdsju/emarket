@@ -36,13 +36,13 @@ class Product(models.Model):
         verbose_name="Price"
     )
     
-    # ✅ FIXED: blank=True যোগ করা হয়েছে
+  
     quantity_unit = models.CharField(
         max_length=50, 
         default="1 kg",
         verbose_name="পরিমাণের একক",
         help_text="যেমন: 1 kg, 500 gm, 250 ml, 1 পিস ইত্যাদি",
-        blank=True  # ✅ এই লাইন যোগ করুন
+        blank=True  
     )
     
     description = models.TextField(blank=True, verbose_name="Description")
@@ -52,7 +52,7 @@ class Product(models.Model):
     created = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated = models.DateTimeField(auto_now=True, verbose_name="Updated At")
     
-    # সার্চ অপটিমাইজেশনের জন্য নতুন ফিল্ড (সিম্পল ভার্সন)
+  
     search_vector = SearchVectorField(null=True, blank=True)
     
     class Meta:
@@ -70,13 +70,13 @@ class Product(models.Model):
         return f"{self.name} ({self.quantity_unit})"
     
     def get_image_url(self):
-        """Return full image URL"""
+    
         if self.image and hasattr(self.image, 'url'):
             return self.image.url
         return None
     
     def update_search_vector(self):
-        """Search vector আপডেট করার মেথড"""
+     
         try:
             from django.contrib.postgres.search import SearchVector
             Product.objects.filter(pk=self.pk).update(

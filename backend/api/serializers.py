@@ -13,10 +13,9 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    # For reading - shows category details
+ 
     category = CategorySerializer(read_only=True)
     
-    # For writing - accepts category ID
     category_id = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),
         source='category',
@@ -25,7 +24,6 @@ class ProductSerializer(serializers.ModelSerializer):
         help_text="Category ID (required)"
     )
     
-    # Custom image URL field
     image_url = serializers.SerializerMethodField()
     
     class Meta:
@@ -39,7 +37,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'image', 
             'image_url',
             'price', 
-            'quantity_unit',  # ✅ নতুন ফিল্ড যোগ করা হয়েছে
+            'quantity_unit',  
             'description', 
             'stock', 
             'available',
@@ -51,11 +49,10 @@ class ProductSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'slug': {'required': False},
             'image': {'required': False},
-            'quantity_unit': {'required': False, 'default': '1 kg'},  # ✅ ডিফল্ট ভ্যালু
+            'quantity_unit': {'required': False, 'default': '1 kg'},  
         }
     
     def get_image_url(self, obj):
-        """Return full URL for image"""
         request = self.context.get('request')
         if obj.image and request:
             return request.build_absolute_uri(obj.image.url)
