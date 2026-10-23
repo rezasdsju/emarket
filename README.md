@@ -284,6 +284,6 @@ This project is built for learning and portfolio purposes. Add a license of your
 
 ## 👤 Author
 
-**Your Name**
-GitHub: [@your-username](https://github.com/your-username)
+**Rezaul Karim Rifat**
+GitHub: [@rezasdsju](https://github.com/rezasdsju)
 Live Demo: https://organic-solution-pqrs.vercel.app/
